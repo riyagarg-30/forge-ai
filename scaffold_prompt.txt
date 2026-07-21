@@ -1,0 +1,162 @@
+# Forge AI - Scaffold Layer Task
+
+## Context
+
+Before making any changes, read `CLAUDE.md` completely and follow every convention defined there.
+
+This repository already contains working mock AI agents.
+
+The purpose of this task is NOT to change existing functionality.
+
+The goal is only to introduce a reusable scaffold layer that future agents can use.
+
+---
+
+# Goal
+
+Create a reusable scaffold inside:
+
+backend/src/scaffold/
+
+The scaffold should improve consistency, reduce duplicated code, and make future AI agent development easier.
+
+This should also prepare the project for future integration with real LLMs while keeping the existing mock implementation unchanged.
+
+---
+
+# Rules
+
+- Do NOT modify any existing agent.
+- Do NOT modify routes.
+- Do NOT modify controllers.
+- Do NOT modify frontend.
+- Do NOT modify database schema.
+- Do NOT change API responses.
+- Do NOT change existing business logic.
+
+This task should be completely additive.
+
+---
+
+# Files to Create
+
+Create the following files inside:
+
+backend/src/scaffold/
+
+### agentTemplate.js
+
+Purpose:
+
+Provide a reusable template that every future AI agent can start from.
+
+Requirements:
+
+- Use parseContext(context)
+- Follow the same context structure as existing agents
+- Include placeholders for:
+  - summary
+  - analysis
+  - findings
+  - recommendations
+  - risks
+  - readinessSignals
+
+This file should serve only as a template.
+
+---
+
+### contextHelpers.js
+
+Create reusable helper functions for extracting commonly used business details.
+
+Examples:
+
+- industry
+- targetRegion
+- businessModel
+- revenueModel
+- startupStage
+- targetAudience
+
+Provide sensible default values where appropriate.
+
+Keep the helpers generic.
+
+---
+
+### responseTemplate.js
+
+Create reusable helper functions that generate a consistent response structure for every future agent.
+
+The goal is to ensure every agent returns data in a predictable format while allowing agent-specific fields to be added later.
+
+---
+
+### scoring.js
+
+Create generic scoring utilities.
+
+Examples:
+
+- normalizeScore()
+- readinessLevel()
+- classifyRisk()
+
+These utilities must NOT contain logic specific to any individual agent.
+
+Keep them reusable across all current and future agents.
+
+---
+
+# Code Style
+
+Follow the conventions defined in CLAUDE.md exactly.
+
+- ES Modules
+- explicit .js imports
+- single quotes
+- no semicolons
+- 2-space indentation
+
+---
+
+# Future Compatibility
+
+The scaffold should support agents such as:
+
+- Research Agent
+- Market Agent
+- Finance Agent
+- Product Agent
+- Legal Agent
+- Prototype Agent
+- Debate Agent
+- CEO Agent
+
+without requiring changes to the scaffold itself.
+
+---
+
+# Important
+
+This scaffold is only infrastructure.
+
+Do not integrate it into existing agents yet.
+
+Do not replace any existing implementation.
+
+Future agents may gradually migrate to this scaffold.
+
+---
+
+# Final Output
+
+After creating the scaffold:
+
+1. Explain each file briefly.
+2. Explain how a future Legal Agent would use it.
+3. Explain how a future Market Agent would use it.
+4. Explain how this scaffold prepares the project for future LLM integration.
+
+Only create the scaffold layer.
