@@ -5,18 +5,27 @@ import { BUSINESS_FIELDS, getDefaultDetails, getMissingFields, extractBusinessDe
 export default function FollowUpModal({ open, ideaText, onClose, onConfirm, loading }) {
   const [details, setDetails] = useState(getDefaultDetails())
   const [showAll, setShowAll] = useState(false)
+  const [fieldsToShow, setFieldsToShow] = useState(BUSINESS_FIELDS)
 
   useEffect(() => {
     if (open && ideaText) {
-      setDetails(getDefaultDetails(extractBusinessDetails(ideaText)))
+      const extracted = getDefaultDetails(extractBusinessDetails(ideaText))
+      setDetails(extracted)
       setShowAll(false)
+
+      // Decide which fields to render ONCE, right when the modal opens.
+      // This must NOT be recalculated on every render, or a field
+      // unmounts the instant its value becomes non-empty (i.e. while typing).
+      const stillMissing = BUSINESS_FIELDS.filter(
+        (f) => f.required && !extracted[f.key]?.toString().trim()
+      )
+      setFieldsToShow(
+        stillMissing.length > 0 ? stillMissing : BUSINESS_FIELDS.filter((f) => f.required)
+      )
     }
   }, [open, ideaText])
 
   const missing = getMissingFields(details)
-  const visibleFields = showAll
-    ? BUSINESS_FIELDS
-    : BUSINESS_FIELDS.filter((f) => f.required && !details[f.key]?.toString().trim())
 
   const handleChange = (key, value) => {
     setDetails((prev) => ({ ...prev, [key]: value }))
@@ -82,7 +91,7 @@ export default function FollowUpModal({ open, ideaText, onClose, onConfirm, load
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {(showAll ? BUSINESS_FIELDS : visibleFields.length > 0 ? visibleFields : BUSINESS_FIELDS.filter((f) => f.required)).map((field) => (
+              {(showAll ? BUSINESS_FIELDS : fieldsToShow).map((field) => (
                 <div key={field.key} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
                   <label className="label-text">
                     {field.label}

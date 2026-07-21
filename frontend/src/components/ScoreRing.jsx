@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion'
 
 export default function ScoreRing({ score, label, size = 120, color = '#8b5cf6' }) {
+  const safeScore = Number.isFinite(score) ? Math.max(0, Math.min(100, score)) : null
   const radius = (size - 12) / 2
   const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
+  const offset = safeScore === null ? circumference : circumference - (safeScore / 100) * circumference
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -38,7 +39,7 @@ export default function ScoreRing({ score, label, size = 120, color = '#8b5cf6' 
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
           >
-            {score}
+            {safeScore === null ? '—' : safeScore}
           </motion.span>
           <span className="text-[10px] text-slate-500">/ 100</span>
         </div>

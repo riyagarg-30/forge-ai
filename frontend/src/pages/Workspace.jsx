@@ -74,7 +74,7 @@ export default function Workspace() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              8 AI co-founders ready to analyze your idea
+              7 AI co-founders ready to analyze your idea
             </motion.div>
 
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
@@ -145,7 +145,7 @@ export default function Workspace() {
             transition={{ delay: 0.5 }}
             className="mt-12 flex flex-wrap items-center justify-center gap-3"
           >
-            {['🔍 Research', '📈 Market', '💰 Finance', '🛠️ Product', '⚖️ Legal', '🎨 Prototype', '🤝 Debate', '👨‍💼 CEO'].map(
+            {['🔍 Research', '📈 Market', '💰 Finance', '🛠️ Product', '⚖️ Legal', '🤝 Debate', '👨‍💼 CEO'].map(
               (label) => (
                 <span key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[10px] text-slate-500">
                   {label}

@@ -4,13 +4,12 @@ export const PARALLEL_AGENTS = [
   { key: 'finance', name: 'Finance Agent', icon: '💰', description: 'Assessing financial feasibility and unit economics' },
   { key: 'product', name: 'Product Agent', icon: '🛠️', description: 'Designing MVP strategy and product roadmap' },
   { key: 'legal', name: 'Legal Agent', icon: '⚖️', description: 'Reviewing regulatory risks and compliance' },
-  { key: 'prototype', name: 'Prototype Agent', icon: '🎨', description: 'Generating prototype concepts and UI direction' },
 ]
 
 export const AGENT_PIPELINE = [
   ...PARALLEL_AGENTS,
-  { key: 'debate', name: 'Debate Engine', icon: '🤝', description: 'Agents challenging and refining conclusions' },
-  { key: 'ceo', name: 'CEO Agent', icon: '👨‍💼', description: 'Synthesizing insights and making final recommendation' },
+  { key: 'debate', name: 'Debate Engine', icon: '🤝', description: 'Investment committee debating the findings' },
+  { key: 'ceo', name: 'CEO Agent', icon: '👨‍💼', description: 'Independently evaluating the venture and issuing a verdict' },
 ]
 
 export const AGENT_KEYS = AGENT_PIPELINE.map((a) => a.key)

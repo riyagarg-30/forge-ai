@@ -40,25 +40,17 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // Analysis — new modular API
+  // Analysis — the backend orchestrator runs the entire pipeline server-side.
+  // The frontend only starts an analysis and polls for progress/results.
   analyze: (ideaText, businessDetails) =>
     request('/api/analyze', {
       method: 'POST',
       body: JSON.stringify({ ideaText, businessDetails }),
     }),
 
-  runAgent: (sessionId, agentKey) =>
-    request(`/api/agents/${agentKey}`, {
-      method: 'POST',
-      body: JSON.stringify({ sessionId }),
-    }),
-
   getReport: (sessionId) => request(`/api/report/${sessionId}`),
 
   // Session management
-  getAgents: () => request('/api/analysis/agents'),
   listSessions: () => request('/api/analysis/sessions'),
   getSession: (sessionId) => request(`/api/analysis/sessions/${sessionId}`),
-  getAgentStatus: (sessionId, agentKey) =>
-    request(`/api/analysis/sessions/${sessionId}/agents/${agentKey}`),
 }

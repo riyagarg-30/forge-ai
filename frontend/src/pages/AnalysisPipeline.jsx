@@ -1,169 +1,94 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import WorkspaceLayout from '../components/WorkspaceLayout'
 import AgentStatusGrid from '../components/AgentStatusGrid'
-import LiveDebate from '../components/LiveDebate'
 import AgentPipelineCard from '../components/AgentPipelineCard'
-import {
-  PARALLEL_AGENTS,
-  PARALLEL_AGENT_KEYS,
-  PHASES,
-  getAgentMeta,
-} from '../constants/agents'
+import LiveDebate from '../components/LiveDebate'
+import { PARALLEL_AGENTS, getAgentMeta } from '../constants/agents'
 import { api } from '../lib/api'
 
-const CEO_AGENT = getAgentMeta('ceo')
-const DEBATE_AGENT = getAgentMeta('debate')
+const POLL_INTERVAL_MS = 1500
 
+const DEBATE_AGENT = getAgentMeta('debate')
+const CEO_AGENT = getAgentMeta('ceo')
+
+/**
+ * Pure observer of backend-driven pipeline state. This page starts nothing
+ * and executes nothing — it polls session/agent status and displays
+ * whatever the orchestrator has actually done so far.
+ */
 export default function AnalysisPipeline() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
   const [session, setSession] = useState(null)
   const [agentResults, setAgentResults] = useState({})
-  const [phase, setPhase] = useState(PHASES.PARALLEL)
   const [error, setError] = useState('')
-  const [debateLive, setDebateLive] = useState(false)
-  const runningRef = useRef(false)
   const pollRef = useRef(null)
-
-  const loadSession = useCallback(async () => {
-    const data = await api.getSession(sessionId)
-    setSession(data.session)
-    const map = {}
-    for (const ar of data.agentResults) {
-      map[ar.agent_key] = ar
-    }
-    setAgentResults(map)
-    return map
-  }, [sessionId])
-
-  const startPolling = useCallback(() => {
-    if (pollRef.current) clearInterval(pollRef.current)
-    pollRef.current = setInterval(async () => {
-      try {
-        const map = await loadSession()
-        const allParallelDone = PARALLEL_AGENT_KEYS.every((k) =>
-          ['completed', 'failed'].includes(map[k]?.status)
-        )
-        if (allParallelDone && pollRef.current) {
-          clearInterval(pollRef.current)
-          pollRef.current = null
-        }
-      } catch {
-        /* ignore poll errors */
-      }
-    }, 800)
-  }, [loadSession])
 
   useEffect(() => {
     let cancelled = false
 
-    async function runPipeline() {
+    async function poll() {
       try {
-        const map = await loadSession()
+        const data = await api.getSession(sessionId)
         if (cancelled) return
 
-        if (map.ceo?.status === 'completed') {
-          navigate(`/analysis/${sessionId}/report`, { replace: true })
-          return
-        }
+        setSession(data.session)
+        const map = {}
+        for (const row of data.agentResults) map[row.agent_key] = row
+        setAgentResults(map)
 
-        if (runningRef.current) return
-        runningRef.current = true
-
-        // Phase 1: Parallel agents
-        const parallelIncomplete = PARALLEL_AGENT_KEYS.filter((k) => map[k]?.status !== 'completed')
-        if (parallelIncomplete.length > 0) {
-          setPhase(PHASES.PARALLEL)
-          startPolling()
-
-          await Promise.all(
-            parallelIncomplete.map((key) =>
-              api.runAgent(sessionId, key).catch((err) => {
-                if (!cancelled) setError(`Agent ${key} failed: ${err.message}`)
-              })
-            )
-          )
-
-          if (pollRef.current) {
-            clearInterval(pollRef.current)
-            pollRef.current = null
-          }
-          await loadSession()
-          if (cancelled) return
-        }
-
-        // Phase 2: Debate
-        setPhase(PHASES.DEBATE)
-        const freshMap = await loadSession()
-        let debateResult = freshMap.debate
-
-        if (debateResult?.status !== 'completed') {
-          const { agentResult } = await api.runAgent(sessionId, 'debate')
-          if (cancelled) return
-          debateResult = agentResult
-          setAgentResults((prev) => ({ ...prev, debate: agentResult }))
-        } else {
-          setAgentResults((prev) => ({ ...prev, debate: freshMap.debate }))
-        }
-
-        // Animate live debate messages before CEO review
-        setDebateLive(true)
-        const messageCount = debateResult?.result?.messages?.length || 9
-        await new Promise((r) => setTimeout(r, messageCount * 1600 + 2500))
-        if (cancelled) return
-        setDebateLive(false)
-
-        // Phase 3: CEO
-        const preCeoMap = await loadSession()
-        if (preCeoMap.ceo?.status !== 'completed') {
-          setPhase(PHASES.CEO)
-          setDebateLive(false)
-
-          const { agentResult } = await api.runAgent(sessionId, 'ceo')
-          if (cancelled) return
-          setAgentResults((prev) => ({ ...prev, ceo: agentResult }))
-        }
-
-        if (!cancelled) {
-          setPhase(PHASES.COMPLETE)
-          runningRef.current = false
+        if (data.session.status === 'completed') {
+          if (pollRef.current) clearInterval(pollRef.current)
           setTimeout(() => {
-            navigate(`/analysis/${sessionId}/report`, { replace: true })
-          }, 1500)
+            if (!cancelled) navigate(`/analysis/${sessionId}/report`, { replace: true })
+          }, 900)
+        } else if (data.session.status === 'failed') {
+          if (pollRef.current) clearInterval(pollRef.current)
         }
       } catch (err) {
-        if (!cancelled) {
-          setError(err.message)
-          runningRef.current = false
-        }
+        if (!cancelled) setError(err.message)
       }
     }
 
-    runPipeline()
+    poll()
+    pollRef.current = setInterval(poll, POLL_INTERVAL_MS)
 
     return () => {
       cancelled = true
       if (pollRef.current) clearInterval(pollRef.current)
     }
-  }, [sessionId, loadSession, navigate, startPolling])
+  }, [sessionId, navigate])
 
-  const parallelComplete = PARALLEL_AGENT_KEYS.filter((k) => agentResults[k]?.status === 'completed').length
-  const parallelProgress = Math.round((parallelComplete / PARALLEL_AGENT_KEYS.length) * 100)
+  const debateResult = agentResults.debate
+  const ceoResult = agentResults.ceo
+
+  const parallelComplete = PARALLEL_AGENTS.filter(
+    (a) => ['completed', 'failed'].includes(agentResults[a.key]?.status)
+  ).length
+  const parallelProgress = Math.round((parallelComplete / PARALLEL_AGENTS.length) * 100)
+  const parallelDone = parallelComplete === PARALLEL_AGENTS.length
+
+  const stage = ceoResult && ceoResult.status !== 'pending'
+    ? 'ceo'
+    : debateResult && debateResult.status !== 'pending'
+      ? 'debate'
+      : 'parallel'
+
+  const sessionFailed = session?.status === 'failed'
 
   return (
     <WorkspaceLayout title="Live Analysis">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="mb-2 flex items-center gap-3">
-            <PhaseIndicator phase={phase} />
+            <PhaseIndicator stage={stage} />
           </div>
           <h1 className="text-xl font-bold text-white sm:text-2xl">
-            {phase === PHASES.PARALLEL && 'AI co-founders analyzing in parallel'}
-            {phase === PHASES.DEBATE && 'Live Debate Engine'}
-            {phase === PHASES.CEO && 'CEO Agent final review'}
-            {phase === PHASES.COMPLETE && 'Analysis complete'}
+            {stage === 'parallel' && 'AI co-founders analyzing in parallel'}
+            {stage === 'debate' && 'Investment Committee Debate'}
+            {stage === 'ceo' && 'CEO Agent final review'}
           </h1>
           {session && (
             <p className="mt-2 text-sm text-slate-400 line-clamp-2">
@@ -180,17 +105,25 @@ export default function AnalysisPipeline() {
           </div>
         )}
 
+        {sessionFailed && (
+          <div className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+            The analysis pipeline failed to complete.{' '}
+            <Link to={`/analysis/${sessionId}/report`} className="underline hover:text-rose-300">
+              View partial results
+            </Link>
+            {' · '}
+            <Link to="/dashboard" className="underline hover:text-rose-300">
+              Back to workspace
+            </Link>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
-          {phase === PHASES.PARALLEL && (
-            <motion.div
-              key="parallel"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+          {stage === 'parallel' && (
+            <motion.div key="parallel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="mb-6">
                 <div className="mb-2 flex justify-between text-xs">
-                  <span className="text-slate-500">{parallelComplete} of {PARALLEL_AGENT_KEYS.length} agents complete</span>
+                  <span className="text-slate-500">{parallelComplete} of {PARALLEL_AGENTS.length} agents done</span>
                   <span className="font-mono text-slate-400">{parallelProgress}%</span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -204,29 +137,33 @@ export default function AnalysisPipeline() {
               <AgentStatusGrid
                 agents={PARALLEL_AGENTS}
                 agentResults={agentResults}
-                activeKeys={PARALLEL_AGENT_KEYS.filter((k) => agentResults[k]?.status === 'running')}
+                activeKeys={PARALLEL_AGENTS.filter((a) => agentResults[a.key]?.status === 'running').map((a) => a.key)}
               />
-            </motion.div>
-          )}
-
-          {phase === PHASES.DEBATE && (
-            <motion.div
-              key="debate"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              <LiveDebate
-                debateResult={agentResults.debate?.result}
-                isLive={debateLive}
-              />
-              {!agentResults.debate?.result && (
-                <p className="mt-4 text-center text-xs text-slate-500">Agents are debating in real time…</p>
+              {parallelDone && !debateResult && (
+                <p className="mt-4 text-center text-xs text-slate-500">Preparing the investment committee debate…</p>
               )}
             </motion.div>
           )}
 
-          {phase === PHASES.CEO && CEO_AGENT && (
+          {stage === 'debate' && DEBATE_AGENT && (
+            <motion.div key="debate" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              {debateResult?.status === 'completed' ? (
+                <LiveDebate debateResult={debateResult.result} isLive={false} />
+              ) : (
+                <div className="max-w-md mx-auto">
+                  <AgentPipelineCard
+                    agent={DEBATE_AGENT}
+                    status={debateResult?.status || 'running'}
+                    index={0}
+                    isActive
+                    preview={debateResult?.progress_message || 'The investment committee is debating the findings…'}
+                  />
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {stage === 'ceo' && CEO_AGENT && (
             <motion.div
               key="ceo"
               initial={{ opacity: 0, y: 20 }}
@@ -236,30 +173,17 @@ export default function AnalysisPipeline() {
             >
               <AgentPipelineCard
                 agent={CEO_AGENT}
-                status={agentResults.ceo?.status || 'running'}
+                status={ceoResult?.status || 'running'}
                 index={0}
                 isActive
-                preview={agentResults.ceo?.progress_message || 'CEO Agent is synthesizing all findings…'}
+                preview={ceoResult?.progress_message || 'CEO Agent is independently evaluating the venture…'}
               />
-            </motion.div>
-          )}
-
-          {phase === PHASES.COMPLETE && (
-            <motion.div
-              key="complete"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-12"
-            >
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-                className="text-5xl"
-              >
-                ✓
-              </motion.div>
-              <p className="mt-4 text-lg font-semibold text-white">Analysis complete</p>
-              <p className="mt-2 text-sm text-slate-400">Opening your intelligence report…</p>
+              {ceoResult?.status === 'completed' && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 text-center">
+                  <p className="text-lg font-semibold text-white">Analysis complete</p>
+                  <p className="mt-2 text-sm text-slate-400">Opening your intelligence report…</p>
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -268,18 +192,18 @@ export default function AnalysisPipeline() {
   )
 }
 
-function PhaseIndicator({ phase }) {
+function PhaseIndicator({ stage }) {
   const phases = [
-    { key: PHASES.PARALLEL, label: 'Parallel Analysis' },
-    { key: PHASES.DEBATE, label: 'Live Debate' },
-    { key: PHASES.CEO, label: 'CEO Review' },
+    { key: 'parallel', label: 'Parallel Analysis' },
+    { key: 'debate', label: 'Committee Debate' },
+    { key: 'ceo', label: 'CEO Review' },
   ]
 
   return (
     <div className="flex items-center gap-2">
       {phases.map((p, i) => {
-        const isActive = p.key === phase
-        const isPast = phases.findIndex((x) => x.key === phase) > i
+        const isActive = p.key === stage
+        const isPast = phases.findIndex((x) => x.key === stage) > i
         return (
           <div key={p.key} className="flex items-center gap-2">
             {i > 0 && <span className="text-slate-700">→</span>}

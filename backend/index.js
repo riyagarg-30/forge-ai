@@ -5,7 +5,7 @@ import authRoutes from './src/routes/authRoutes.js'
 import userRoutes from './src/routes/userRoutes.js'
 import analysisRoutes from './src/routes/analysisRoutes.js'
 import { requireAuth } from './src/middleware/authMiddleware.js'
-import { analyze, runAgentByKey, getReport } from './src/controllers/analysisController.js'
+import { analyze, getReport } from './src/controllers/analysisController.js'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -29,7 +29,6 @@ app.use('/api/analysis', analysisRoutes)
 
 // Top-level modular agent API (spec-compliant aliases)
 app.post('/api/analyze', requireAuth, analyze)
-app.post('/api/agents/:agentKey', requireAuth, runAgentByKey)
 app.get('/api/report/:id', requireAuth, getReport)
 
 app.use((req, res) => {
