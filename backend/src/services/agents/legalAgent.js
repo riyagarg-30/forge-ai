@@ -1,6 +1,7 @@
 import { parseContext } from './context.js'
 import { webSearch } from './lib/webSearch.js'
 import { generateStructured } from './lib/llmJson.js'
+import { MODELS } from './lib/groqClient.js'
 import { tagSources } from './lib/sourceUtils.js'
 import { buildLegalPrompt } from './prompts/legalPrompt.js'
 import { legalSchema } from './schemas/legalSchema.js'
@@ -22,6 +23,7 @@ export async function runLegalAgent(context) {
     agentName: 'Legal Agent',
     prompt,
     schema: legalSchema,
+    model: MODELS.fast,
   })
 
   result.sources = tagSources(sources)

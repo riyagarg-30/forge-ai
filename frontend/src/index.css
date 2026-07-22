@@ -30,6 +30,16 @@ body {
   background: rgba(139, 92, 246, 0.6);
 }
 
+.input-field {
+  background: #18181b;
+  color: #fff;
+}
+
+.input-field option {
+  background: #18181b;
+  color: #fff;
+}
+
 @layer components {
   .glass {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-glow;

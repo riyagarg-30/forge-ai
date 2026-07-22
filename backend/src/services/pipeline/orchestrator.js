@@ -1,22 +1,10 @@
 import { supabaseAdmin } from '../../config/supabaseAdmin.js'
 import { AGENT_META } from '../../constants/agents.js'
 import { executeAgent } from '../agents/index.js'
-import { getExecutionStages } from './dependencyGraph.js'
+import { AGENT_DEPENDENCIES } from './dependencyGraph.js'
+import { createProfiler, runWithProfiler, profileAsync, summarize } from '../agents/lib/profiler.js'
 
 const MAX_ATTEMPTS = 2 // 1 initial attempt + 1 retry on failure
-
-async function loadResultRows(sessionId) {
-  const { data, error } = await supabaseAdmin
-    .from('agent_results')
-    .select('*')
-    .eq('session_id', sessionId)
-
-  if (error) throw error
-
-  const map = {}
-  for (const row of data || []) map[row.agent_key] = row
-  return map
-}
 
 function buildPriorResults(resultsMap) {
   const priorResults = {}
@@ -32,6 +20,11 @@ function buildPriorResults(resultsMap) {
  * Executes one agent, persisting real status/progress transitions as it
  * goes. Never throws — on repeated failure it marks the row 'failed' and
  * returns it, so the pipeline can continue with whatever succeeded.
+ *
+ * On success/failure it returns an in-memory row (spread from the row it was
+ * given, with the new fields applied) rather than re-selecting the row it
+ * just wrote — the completed row is persisted for the frontend, but the
+ * pipeline never needs to read it back to feed downstream agents.
  */
 async function runSingleAgent(session, agentKey, resultRow, resultsMap) {
   const meta = AGENT_META[agentKey]
@@ -45,99 +38,152 @@ async function runSingleAgent(session, agentKey, resultRow, resultsMap) {
   let lastError = null
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    await supabaseAdmin
-      .from('agent_results')
-      .update({
-        status: 'running',
-        started_at: new Date().toISOString(),
-        error_message: null,
-        progress_phase: 'running',
-        progress_message:
-          attempt === 1
-            ? `${meta?.name || agentKey} is running…`
-            : `${meta?.name || agentKey} is retrying (attempt ${attempt} of ${MAX_ATTEMPTS})…`,
-      })
-      .eq('id', resultRow.id)
-
-    try {
-      const result = await executeAgent(agentKey, context)
-
-      const { data: updated, error: updateError } = await supabaseAdmin
+    await profileAsync('db', `mark-running:${agentKey}`, () =>
+      supabaseAdmin
         .from('agent_results')
         .update({
-          status: 'completed',
-          result,
-          completed_at: new Date().toISOString(),
-          progress_phase: 'completed',
-          progress_message: `${meta?.name || agentKey} completed.`,
+          status: 'running',
+          started_at: new Date().toISOString(),
           error_message: null,
+          progress_phase: 'running',
+          progress_message:
+            attempt === 1
+              ? `${meta?.name || agentKey} is running…`
+              : `${meta?.name || agentKey} is retrying (attempt ${attempt} of ${MAX_ATTEMPTS})…`,
         })
         .eq('id', resultRow.id)
-        .select()
-        .single()
+    )
+
+    try {
+      const result = await profileAsync('agent', agentKey, () => executeAgent(agentKey, context))
+
+      const { error: updateError } = await profileAsync('db', `mark-completed:${agentKey}`, () =>
+        supabaseAdmin
+          .from('agent_results')
+          .update({
+            status: 'completed',
+            result,
+            completed_at: new Date().toISOString(),
+            progress_phase: 'completed',
+            progress_message: `${meta?.name || agentKey} completed.`,
+            error_message: null,
+          })
+          .eq('id', resultRow.id)
+      )
 
       if (updateError) throw updateError
-      return updated
+
+      // Synthesize the updated row locally instead of reading it back — the
+      // only fields downstream agents consume are `status` and `result`.
+      return {
+        ...resultRow,
+        status: 'completed',
+        result,
+        progress_phase: 'completed',
+        progress_message: `${meta?.name || agentKey} completed.`,
+        error_message: null,
+      }
     } catch (err) {
       lastError = err
       console.error(`[pipeline] ${agentKey} attempt ${attempt}/${MAX_ATTEMPTS} failed:`, err.message)
     }
   }
 
-  const { data: failed } = await supabaseAdmin
-    .from('agent_results')
-    .update({
-      status: 'failed',
-      error_message: lastError?.message || 'Agent execution failed.',
-      completed_at: new Date().toISOString(),
-      progress_phase: 'failed',
-      progress_message: `${meta?.name || agentKey} failed after ${MAX_ATTEMPTS} attempts.`,
-    })
-    .eq('id', resultRow.id)
-    .select()
-    .single()
+  await profileAsync('db', `mark-failed:${agentKey}`, () =>
+    supabaseAdmin
+      .from('agent_results')
+      .update({
+        status: 'failed',
+        error_message: lastError?.message || 'Agent execution failed.',
+        completed_at: new Date().toISOString(),
+        progress_phase: 'failed',
+        progress_message: `${meta?.name || agentKey} failed after ${MAX_ATTEMPTS} attempts.`,
+      })
+      .eq('id', resultRow.id)
+  )
 
-  return failed || resultRow
+  return {
+    ...resultRow,
+    status: 'failed',
+    error_message: lastError?.message || 'Agent execution failed.',
+    progress_phase: 'failed',
+  }
 }
 
 /**
- * Runs the full agent pipeline for a session, stage by stage, entirely on
- * the backend. Each stage's agents run concurrently; a failed agent is
- * retried once, then marked failed without blocking the rest of the
- * pipeline — downstream agents simply reason with whatever completed.
+ * Runs the full agent pipeline for a session using a dependency-driven
+ * scheduler: each agent starts the instant ITS OWN declared dependencies
+ * finish, rather than waiting for a whole "stage" to complete. This removes
+ * the stage barrier that previously made finance/product wait on legal even
+ * though they don't depend on it.
+ *
+ * Each completed agent is persisted immediately (so the polling frontend sees
+ * per-agent progress in real time). A failed agent is retried once, then
+ * marked failed without blocking the rest of the pipeline — downstream agents
+ * simply reason with whatever completed.
+ *
+ * `preloaded` (optional): `{ session, agentRows }` handed in by the controller
+ * that just created them, so the pipeline can skip re-fetching both. Falls
+ * back to loading them if not provided.
  */
-export async function runPipeline(sessionId) {
-  const { data: session, error: sessionError } = await supabaseAdmin
-    .from('analysis_sessions')
-    .select('*')
-    .eq('id', sessionId)
-    .single()
+export async function runPipeline(sessionId, preloaded = null) {
+  const profiler = createProfiler(`session:${sessionId}`)
 
-  if (sessionError || !session) {
-    throw new Error(`Session ${sessionId} not found for pipeline execution.`)
-  }
+  return runWithProfiler(profiler, async () => {
+    let session = preloaded?.session
+    if (!session) {
+      const { data, error } = await profileAsync('db', 'load-session', () =>
+        supabaseAdmin.from('analysis_sessions').select('*').eq('id', sessionId).single()
+      )
+      if (error || !data) {
+        throw new Error(`Session ${sessionId} not found for pipeline execution.`)
+      }
+      session = data
+    }
 
-  await supabaseAdmin.from('analysis_sessions').update({ status: 'running' }).eq('id', sessionId)
-
-  const resultsMap = await loadResultRows(sessionId)
-  const stages = getExecutionStages()
-
-  for (const stage of stages) {
-    const runnable = stage.filter((agentKey) => resultsMap[agentKey])
-    const outcomes = await Promise.allSettled(
-      runnable.map((agentKey) => runSingleAgent(session, agentKey, resultsMap[agentKey], resultsMap))
+    await profileAsync('db', 'status-running', () =>
+      supabaseAdmin.from('analysis_sessions').update({ status: 'running' }).eq('id', sessionId)
     )
 
-    outcomes.forEach((outcome, index) => {
-      const agentKey = runnable[index]
-      if (outcome.status === 'fulfilled' && outcome.value) {
-        resultsMap[agentKey] = outcome.value
-      }
-    })
-  }
+    const resultsMap = {}
+    let rows = preloaded?.agentRows
+    if (!rows) {
+      const { data, error } = await profileAsync('db', 'load-agent-rows', () =>
+        supabaseAdmin.from('agent_results').select('*').eq('session_id', sessionId)
+      )
+      if (error) throw error
+      rows = data || []
+    }
+    for (const row of rows) resultsMap[row.agent_key] = row
 
-  const finalStatus = resultsMap.ceo?.status === 'completed' ? 'completed' : 'failed'
-  await supabaseAdmin.from('analysis_sessions').update({ status: finalStatus }).eq('id', sessionId)
+    // Dependency-driven scheduling. `launch(agentKey)` is memoized so shared
+    // dependencies (e.g. research/market) run exactly once; each agent awaits
+    // only its own dependencies before executing. The dependency graph is a
+    // static, acyclic constant, so no cycle guard is needed here.
+    const launched = {}
+    const launch = (agentKey) => {
+      if (launched[agentKey]) return launched[agentKey]
+      const deps = AGENT_DEPENDENCIES[agentKey] || []
+      launched[agentKey] = (async () => {
+        await Promise.all(deps.map((dep) => launch(dep)))
+        const row = resultsMap[agentKey]
+        if (!row) return null
+        const updated = await runSingleAgent(session, agentKey, row, resultsMap)
+        if (updated) resultsMap[agentKey] = updated
+        return updated
+      })()
+      return launched[agentKey]
+    }
 
-  return resultsMap
+    await Promise.allSettled(Object.keys(AGENT_DEPENDENCIES).map((key) => launch(key)))
+
+    const finalStatus = resultsMap.ceo?.status === 'completed' ? 'completed' : 'failed'
+    await profileAsync('db', 'status-final', () =>
+      supabaseAdmin.from('analysis_sessions').update({ status: finalStatus }).eq('id', sessionId)
+    )
+
+    console.log(summarize(profiler))
+
+    return resultsMap
+  })
 }

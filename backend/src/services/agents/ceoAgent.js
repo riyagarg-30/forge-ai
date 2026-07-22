@@ -1,5 +1,6 @@
 import { parseContext } from './context.js'
 import { generateStructured } from './lib/llmJson.js'
+import { MODELS } from './lib/groqClient.js'
 import { collectSources, filterToKnownSources } from './lib/sourceUtils.js'
 import { buildCeoPrompt } from './prompts/ceoPrompt.js'
 import { ceoSchema } from './schemas/ceoSchema.js'
@@ -25,6 +26,7 @@ export async function runCeoAgent(context) {
     schema: ceoSchema,
     temperature: 0.4,
     maxTokens: 6000,
+    model: MODELS.reasoning,
   })
 
   const allowedSources = collectSources(

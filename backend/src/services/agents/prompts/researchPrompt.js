@@ -1,4 +1,4 @@
-import { buildStartupContext } from '../lib/buildStartupContext.js'
+import { buildStartupContext, HARD_CONSTRAINTS_RULE, CURRENCY_RULE, PLAIN_ENGLISH_RULE } from '../lib/buildStartupContext.js'
 
 export function buildResearchPrompt({ startupName, ideaText, businessDetails, searchResults }) {
   const context = buildStartupContext({ startupName, ideaText, businessDetails })
@@ -14,6 +14,12 @@ ${context}
 
 LIVE WEB RESEARCH (ground your findings in this — treat it as your primary source of truth for facts, trends, and figures; do not contradict it):
 ${searchResults || 'No search results found.'}
+
+${HARD_CONSTRAINTS_RULE}
+
+${CURRENCY_RULE}
+
+${PLAIN_ENGLISH_RULE}
 
 INSTRUCTIONS
 1. Interpret the idea precisely. If it is ambiguous or terse, state your interpretation explicitly before analyzing it — do not default to a generic reading.

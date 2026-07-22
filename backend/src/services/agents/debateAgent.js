@@ -1,5 +1,6 @@
 import { parseContext } from './context.js'
 import { generateStructured } from './lib/llmJson.js'
+import { MODELS } from './lib/groqClient.js'
 import { collectSources, filterToKnownSources } from './lib/sourceUtils.js'
 import { buildDebatePrompt } from './prompts/debatePrompt.js'
 import { debateSchema } from './schemas/debateSchema.js'
@@ -24,6 +25,7 @@ export async function runDebateAgent(context) {
     schema: debateSchema,
     temperature: 0.55,
     maxTokens: 5000,
+    model: MODELS.reasoning,
   })
 
   const allowedSources = collectSources(

@@ -1,4 +1,4 @@
-import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE } from '../lib/buildStartupContext.js'
+import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE, HARD_CONSTRAINTS_RULE, CURRENCY_RULE, PLAIN_ENGLISH_RULE } from '../lib/buildStartupContext.js'
 
 export function buildProductPrompt({ startupName, ideaText, businessDetails, market, research }) {
   const context = buildStartupContext({ startupName, ideaText, businessDetails })
@@ -16,9 +16,15 @@ ${formatPriorResult('MARKET ANALYSIS (from the Market Agent)', market)}
 
 ${formatPriorResult('RESEARCH FINDINGS (from the Research Agent)', research)}
 
+${HARD_CONSTRAINTS_RULE}
+
+${CURRENCY_RULE}
+
+${PLAIN_ENGLISH_RULE}
+
 INSTRUCTIONS
-1. Define a product strategy specific to this idea's core job-to-be-done — not generic "focus on speed-to-value" advice that could apply to any startup.
-2. Define an MVP strategy phased against the founder's stated timeline and budget. If the timeline/budget is unrealistic for the scope implied by the idea, say so explicitly and recommend a cut, rather than pretending it fits.
+1. Define a product strategy specific to this idea's core job-to-be-done (the actual task the customer "hires" this product to do) — not generic "focus on speed-to-value" advice that could apply to any startup.
+2. Define an MVP (minimum viable product — the smallest version that still proves the core idea works) strategy phased against the founder's stated timeline and budget as HARD limits. If the timeline, budget, team size, or team skills cannot realistically deliver the scope the idea implies, say so explicitly and recommend a concrete cut (or state it is not buildable as-is) — do not pretend it fits or assume extra hires, time, or money.
 3. List concrete core features specific to this product (not generic "AI-powered onboarding wizard" filler that could describe any app) — each feature should map to a real part of the problem this product solves.
 4. Recommend a tech stack appropriate to this product's actual technical requirements (e.g. a hardware product needs a firmware/embedded stack and industrial design tooling, not React + Node). Justify choices against team size and technical feasibility, not default web-app conventions.
 5. Give a realistic timeline to MVP and to public beta, consistent with the founder's stated timeline and team size — flag if the stated timeline looks infeasible for the scope.

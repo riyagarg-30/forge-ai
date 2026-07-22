@@ -95,7 +95,12 @@ export async function analyze(req, res) {
       status: 'pending',
     }))
 
-    const { error: agentsError } = await supabaseAdmin.from('agent_results').insert(agentRows)
+    // Insert AND return the created rows in one round trip, so the pipeline
+    // can start without a separate read of session + agent rows.
+    const { data: createdAgentRows, error: agentsError } = await supabaseAdmin
+      .from('agent_results')
+      .insert(agentRows)
+      .select()
 
     if (agentsError) {
       console.error('analyze agents error:', agentsError)
@@ -103,7 +108,7 @@ export async function analyze(req, res) {
       return res.status(500).json({ message: 'Failed to initialize agent pipeline.' })
     }
 
-    runPipeline(session.id).catch(async (err) => {
+    runPipeline(session.id, { session, agentRows: createdAgentRows }).catch(async (err) => {
       console.error(`Pipeline execution error for session ${session.id}:`, err)
       await supabaseAdmin.from('analysis_sessions').update({ status: 'failed' }).eq('id', session.id)
     })

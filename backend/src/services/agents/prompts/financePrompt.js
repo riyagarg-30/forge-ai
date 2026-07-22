@@ -1,4 +1,4 @@
-import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE } from '../lib/buildStartupContext.js'
+import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE, HARD_CONSTRAINTS_RULE, CURRENCY_RULE, PLAIN_ENGLISH_RULE } from '../lib/buildStartupContext.js'
 
 export function buildFinancePrompt({ startupName, ideaText, businessDetails, market, research }) {
   const context = buildStartupContext({ startupName, ideaText, businessDetails })
@@ -16,14 +16,20 @@ ${formatPriorResult('MARKET ANALYSIS (from the Market Agent)', market)}
 
 ${formatPriorResult('RESEARCH FINDINGS (from the Research Agent)', research)}
 
+${HARD_CONSTRAINTS_RULE}
+
+${CURRENCY_RULE}
+
+${PLAIN_ENGLISH_RULE}
+
 INSTRUCTIONS
-1. Judge financial feasibility for THIS specific startup — an AI healthcare tool, an AI freelancer tool, a food delivery app, and an EdTech platform must never get the same cost structure or unit economics. Reflect the actual industry.
+1. Judge financial feasibility for THIS specific startup — an AI healthcare tool, an AI freelancer tool, a food delivery app, and an EdTech platform must never get the same cost structure or unit economics. Reflect the actual industry. Anchor the whole analysis to the founder's stated budget as a HARD ceiling: if the realistic startup cost exceeds the budget, or the burn cannot be covered within the stated timeline and team, say so explicitly in "financialFeasibility" rather than trimming numbers to force a fit.
 2. Break down estimated startup costs into at least the following categories (merge or add categories if it makes more sense for this idea, but never omit categories that clearly apply): product development, AI/API costs (only if the product is AI-driven), cloud/infrastructure, marketing, legal, operations, salaries, miscellaneous. Give each a realistic amount and a one-line justification, then a total.
 3. Recommend the revenue model best suited to this business model and customer type (Subscription, Freemium, Marketplace Commission, Usage-Based, Enterprise Licensing, Ads, Hybrid) and explain why, referencing the founder's stated business/revenue model and the market analysis above where available.
 4. Recommend 3-4 pricing tiers with realistic monthly prices for this specific market and geography (do not default to US SaaS pricing conventions if the target region/industry doesn't support them).
-5. Compute unit economics (CAC, LTV, ARPU, gross margin, LTV:CAC ratio, monthly burn) using assumptions grounded in the industry and geography — state the assumptions.
-6. Build a break-even analysis: monthly expenses, monthly revenue needed, customers needed, and expected timeline, with assumptions stated explicitly.
-7. Recommend a funding stage (Bootstrap, Angel, Pre-seed, Seed, Series A) and approximate amount, justified by the budget, team size, and market opportunity above.
+5. Compute unit economics and explain each metric in plain English the first time it appears: CAC (customer acquisition cost — what you spend to win one paying customer), LTV (lifetime value — total profit one customer brings over their whole relationship), ARPU (average revenue per user per period), gross margin (the % of revenue left after the direct cost of delivering the product), LTV:CAC ratio (how many times over each customer repays what it cost to acquire them), and monthly burn (how much cash you spend per month beyond what you earn). Ground assumptions in the industry and geography, state them, and express every money figure with a currency symbol/code.
+6. Build a break-even analysis — break-even means the point where monthly revenue finally covers monthly costs. Give monthly expenses, monthly revenue needed, customers needed, and expected timeline, with assumptions stated explicitly, and check the timeline against the founder's stated timeline and runway (how many months the budget lasts at the burn rate above).
+7. Recommend a funding stage (Bootstrap, Angel, Pre-seed, Seed, Series A) and an approximate amount (with currency), justified by the budget, team size, and market opportunity above. If the stated budget genuinely cannot cover the path to break-even, say plainly that outside funding is required and why — but do not treat that funding as already secured when judging feasibility.
 8. Identify financial risks specific to this business (not generic "economic downturn" filler), each with a severity of exactly "Low", "Medium", or "High", and a mitigation.
 9. Score investor-readiness-relevant signals honestly based on the actual analysis above — do not default to comfortable mid-range numbers.
 10. State every assumption you made explicitly, and give an overall confidence score (0-100) reflecting how much real market/research grounding you had versus first-principles reasoning.

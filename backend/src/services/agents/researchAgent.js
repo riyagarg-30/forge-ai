@@ -1,6 +1,7 @@
 import { parseContext } from './context.js'
 import { webSearch } from './lib/webSearch.js'
 import { generateStructured } from './lib/llmJson.js'
+import { MODELS } from './lib/groqClient.js'
 import { tagSources } from './lib/sourceUtils.js'
 import { buildResearchPrompt } from './prompts/researchPrompt.js'
 import { researchSchema } from './schemas/researchSchema.js'
@@ -22,6 +23,7 @@ export async function runResearchAgent(context) {
     agentName: 'Research Agent',
     prompt,
     schema: researchSchema,
+    model: MODELS.fast,
   })
 
   // Sources are always the real, typed search results — never the model's

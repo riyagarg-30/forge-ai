@@ -1,5 +1,6 @@
 import { parseContext } from './context.js'
 import { generateStructured } from './lib/llmJson.js'
+import { MODELS } from './lib/groqClient.js'
 import { collectSources, filterToKnownSources } from './lib/sourceUtils.js'
 import { buildFinancePrompt } from './prompts/financePrompt.js'
 import { financeSchema } from './schemas/financeSchema.js'
@@ -19,6 +20,7 @@ export async function runFinanceAgent(context) {
     agentName: 'Finance Agent',
     prompt,
     schema: financeSchema,
+    model: MODELS.fast,
   })
 
   // The model can only cite sources that genuinely exist in the upstream

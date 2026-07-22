@@ -1,4 +1,4 @@
-import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE } from '../lib/buildStartupContext.js'
+import { buildStartupContext, formatPriorResult, SOURCE_CITATION_RULE, HARD_CONSTRAINTS_RULE, CURRENCY_RULE, PLAIN_ENGLISH_RULE } from '../lib/buildStartupContext.js'
 import { DEBATE_PERSONAS } from '../schemas/debateSchema.js'
 
 export function buildDebatePrompt({ startupName, ideaText, businessDetails, research, market, finance, product, legal }) {
@@ -27,6 +27,12 @@ ${formatPriorResult('FINANCE AGENT REPORT', finance)}
 ${formatPriorResult('PRODUCT AGENT REPORT', product)}
 
 ${formatPriorResult('LEGAL AGENT REPORT', legal)}
+
+${HARD_CONSTRAINTS_RULE}
+
+${CURRENCY_RULE}
+
+${PLAIN_ENGLISH_RULE}
 
 INSTRUCTIONS
 1. Each of the 7 personas must speak at least once, referencing SPECIFIC content from the reports above (a number, an assumption, a named competitor, a stated risk) — not vague platitudes.

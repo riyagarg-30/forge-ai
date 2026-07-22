@@ -1,4 +1,4 @@
-import { buildStartupContext } from '../lib/buildStartupContext.js'
+import { buildStartupContext, HARD_CONSTRAINTS_RULE, CURRENCY_RULE, PLAIN_ENGLISH_RULE } from '../lib/buildStartupContext.js'
 
 export function buildLegalPrompt({ startupName, ideaText, businessDetails, searchResults }) {
   const context = buildStartupContext({ startupName, ideaText, businessDetails })
@@ -15,11 +15,17 @@ ${context}
 LIVE WEB RESEARCH on regulatory/compliance requirements relevant to this industry and geography (use as grounding; do not contradict it, and prefer citing government or official regulatory sources when present):
 ${searchResults || 'No search results found.'}
 
+${HARD_CONSTRAINTS_RULE}
+
+${CURRENCY_RULE}
+
+${PLAIN_ENGLISH_RULE}
+
 INSTRUCTIONS
 1. Assess overall legal risk level for this specific startup, industry, and country/region — justify why it is low, moderate, or elevated given the actual regulatory context (e.g. healthcare/health-adjacent data, financial services/payments, biometric data, minors, employment marketplaces all carry materially different risk than a generic B2B SaaS tool).
 2. List regulatory considerations specific to the founder's stated country and target region, and specific to the industry (data privacy regimes that actually apply given the stated geography, sector-specific licensing/certifications, AI-specific liability/disclosure obligations if the product uses AI).
 3. Address IP considerations specific to this idea: trademark risk for the given name, patent/novelty considerations only if the core technology is plausibly novel, open-source licensing risk if relevant.
-4. List concrete compliance requirements this startup needs at or before launch, prioritized by urgency.
+4. List concrete compliance requirements this startup needs at or before launch, prioritized by urgency. Where a requirement carries a real cost or time burden (licensing fees, certifications, legal counsel), note it with a currency figure and flag if it plausibly strains the founder's stated budget or timeline — a compliance step the founder cannot afford or complete in time is a launch blocker, not a footnote.
 5. Identify specific legal risks (not generic boilerplate) with a severity of exactly "Low", "Medium", or "High" and a concrete, actionable mitigation for each.
 6. State assumptions explicitly wherever the founder's input or the research was incomplete (e.g. unclear whether the product handles regulated data).
 7. Give a confidence score (0-100) reflecting how well the research and provided context support your regulatory conclusions.

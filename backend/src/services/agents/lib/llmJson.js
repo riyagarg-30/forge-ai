@@ -1,22 +1,27 @@
 import { groq, GROQ_MODEL } from './groqClient.js'
+import { profileAsync, profileSync } from './profiler.js'
 
 function extractJson(raw) {
-  const trimmed = raw.trim()
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
-  const candidate = fenced ? fenced[1] : trimmed
-  return JSON.parse(candidate)
+  return profileSync('parse', 'extract-json', () => {
+    const trimmed = raw.trim()
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+    const candidate = fenced ? fenced[1] : trimmed
+    return JSON.parse(candidate)
+  })
 }
 
-async function callGroqJson(prompt, { temperature, maxTokens }) {
-  const response = await groq.chat.completions.create({
-    model: GROQ_MODEL,
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    temperature,
-    max_tokens: maxTokens,
-  })
+async function callGroqJson(prompt, { temperature, maxTokens, model }) {
+  return profileAsync('llm', model, async () => {
+    const response = await groq.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature,
+      max_tokens: maxTokens,
+    })
 
-  return response.choices[0].message.content
+    return response.choices[0].message.content
+  })
 }
 
 function buildRepairPrompt(originalPrompt, badOutput, issues) {
@@ -48,11 +53,12 @@ export async function generateStructured({
   schema,
   temperature = 0.35,
   maxTokens = 4000,
+  model = GROQ_MODEL,
 }) {
   let rawOutput = ''
 
   try {
-    rawOutput = await callGroqJson(prompt, { temperature, maxTokens })
+    rawOutput = await callGroqJson(prompt, { temperature, maxTokens, model })
     const parsed = extractJson(rawOutput)
     const result = schema.safeParse(parsed)
     if (result.success) return result.data
@@ -62,7 +68,7 @@ export async function generateStructured({
       .join('\n')
 
     const repairPrompt = buildRepairPrompt(prompt, rawOutput, issues)
-    const repairedRaw = await callGroqJson(repairPrompt, { temperature: 0.1, maxTokens })
+    const repairedRaw = await callGroqJson(repairPrompt, { temperature: 0.1, maxTokens, model })
     const repairedParsed = extractJson(repairedRaw)
     const repairedResult = schema.safeParse(repairedParsed)
 
