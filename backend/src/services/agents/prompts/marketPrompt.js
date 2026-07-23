@@ -31,6 +31,7 @@ CONSTRAINTS
 - Never output placeholder or templated language — every field must be specific to this idea.
 - Plain text only. NEVER output HTML tags, Markdown links, or JSX in any field. Websites are plain URLs only.
 - Return ONLY valid JSON. No preamble, no markdown fences.
+- Be concise: total output across all fields should read like a decision-ready memo, roughly 250-400 words. Keep each competitor's description/whyRelevant/strengths/weaknesses to one short sentence each. No repetition or filler — only figures and findings an investment committee would actually use.
 
 REASONING STRATEGY
 Work in this order internally: (1) pin down exactly what the product is and its true category, (2) extract and reconcile sizing figures from the research, (3) shortlist real competitors from the research, (4) evaluate each competitor's relevance/strengths/weaknesses, (5) derive customer segments and trends from the same evidence, (6) only then write the final JSON. Do not size the market before you've confirmed what it actually is.

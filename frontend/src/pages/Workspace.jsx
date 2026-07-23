@@ -56,7 +56,7 @@ export default function Workspace() {
 
   return (
     <WorkspaceLayout showSidebar sidebar={<AnalysisSidebar onNewAnalysis={handleNewAnalysis} />}>
-      <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-12">
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,20 +68,20 @@ export default function Workspace() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-xs text-slate-400 backdrop-blur-sm"
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-landing-border bg-landing-card px-4 py-1.5 text-xs font-medium text-landing-muted"
             >
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
               7 AI co-founders ready to analyze your idea
             </motion.div>
 
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
+            <h1 className="text-3xl font-bold tracking-tight text-landing-text sm:text-4xl md:text-5xl">
               Hey {firstName},{' '}
-              <span className="gradient-text">validate your startup</span>
+              <span className="text-landing-accent">validate your startup</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-slate-400 sm:text-base">
+            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-landing-muted sm:text-base">
               Describe your idea and watch our AI co-founder team research, debate, and deliver
               a build recommendation — transparently, in real time.
             </p>
@@ -94,22 +94,22 @@ export default function Workspace() {
             transition={{ delay: 0.2 }}
             className="relative"
           >
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-1 backdrop-blur-xl shadow-[0_0_60px_rgba(139,92,246,0.08)]">
+            <div className="rounded-2xl border border-landing-border bg-white p-1 shadow-sm">
               <textarea
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
                 placeholder="Describe your startup idea…"
                 rows={4}
-                className="w-full resize-none rounded-xl bg-transparent px-5 py-4 text-sm text-slate-100 placeholder-slate-500 outline-none sm:text-base"
+                className="w-full resize-none rounded-xl bg-transparent px-5 py-4 text-sm text-landing-text placeholder-landing-muted outline-none sm:text-base"
               />
-              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3">
-                <span className="text-[11px] text-slate-500">
+              <div className="flex items-center justify-between border-t border-landing-border px-4 py-3">
+                <span className="text-[11px] text-landing-muted">
                   {idea.length > 0 ? `${idea.length} characters` : 'Be specific — the more detail, the better the analysis'}
                 </span>
                 <button
                   type="submit"
                   disabled={idea.trim().length < 10}
-                  className="inline-flex items-center gap-2 rounded-xl bg-forge-gradient px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-landing-accent px-5 py-2 text-sm font-semibold text-white shadow-md shadow-landing-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
                 >
                   Analyze Idea
                   <span className="text-base">→</span>
@@ -118,20 +118,20 @@ export default function Workspace() {
             </div>
 
             {error && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-center text-sm text-rose-400">
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-center text-sm text-rose-600">
                 {error}
               </motion.p>
             )}
           </motion.form>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-8">
-            <p className="mb-3 text-center text-xs text-slate-500">Try an example</p>
+            <p className="mb-3 text-center text-xs text-landing-muted">Try an example</p>
             <div className="flex flex-wrap justify-center gap-2">
               {suggestions.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => setIdea(s)}
-                  className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-slate-400 transition-colors hover:border-white/15 hover:bg-white/[0.06] hover:text-slate-200"
+                  className="rounded-full border border-landing-border bg-landing-card px-3 py-1.5 text-[11px] text-landing-muted transition-colors hover:border-landing-accent/40 hover:bg-white hover:text-landing-text"
                 >
                   {s.length > 55 ? s.slice(0, 55) + '…' : s}
                 </button>
@@ -147,7 +147,7 @@ export default function Workspace() {
           >
             {['🔍 Research', '📈 Market', '💰 Finance', '🛠️ Product', '⚖️ Legal', '🤝 Debate', '👨‍💼 CEO'].map(
               (label) => (
-                <span key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-2.5 py-1 text-[10px] text-slate-500">
+                <span key={label} className="rounded-lg border border-landing-border bg-landing-card px-2.5 py-1 text-[10px] text-landing-muted">
                   {label}
                 </span>
               )

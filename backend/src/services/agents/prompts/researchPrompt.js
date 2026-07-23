@@ -32,6 +32,7 @@ CONSTRAINTS
 - Do not fabricate a fixed competitor count "24" or any other filler number — derive it from the evidence, and say so if it's an estimate.
 - Output plain text only inside string fields. No markdown, no HTML.
 - Return ONLY valid JSON. No preamble, no explanation, no markdown fences.
+- Be concise: total output across all fields should read like a decision-ready brief, roughly 250-400 words. Use short, specific sentences (bullet-style, one point per array item). No repetition, no restating the prompt, no filler — only findings a downstream agent would actually act on.
 
 REASONING STRATEGY
 Think in this order before writing the JSON: (1) confirm what the product actually is, (2) validate the problem using the research, (3) assess demand evidence, (4) place it in current industry trends, (5) size up the competitive field, (6) surface risks and assumptions, (7) only then produce the structured output. Do not skip straight to writing findings.

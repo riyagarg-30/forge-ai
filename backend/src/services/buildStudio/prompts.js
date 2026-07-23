@@ -99,47 +99,68 @@ an estimated per-unit cost range, an estimated timeline, quality control checks,
 Return strict JSON only matching the required schema.`
 }
 
-/* -------------------------------------- Image prompts ------------------------------------------ */
+/* --------------------------------- Concept sheet prompt ----------------------------------------- */
 
-const IMAGE_STYLE_SUFFIX =
-  'Clean, modern, professional style. High production value. No text artifacts or watermarks. ' +
-  'No real brand logos or copyrighted characters.'
+/**
+ * Replaces Pollinations image generation entirely. The LLM only supplies
+ * factual/creative CONTENT (dimensions, materials, components, specs) —
+ * never layout, pixels, or drawing instructions. The frontend deterministically
+ * renders that content as an HTML/CSS/SVG engineering concept sheet, so the
+ * same input always renders the same way instead of a one-off AI image.
+ */
+export function conceptSheetPrompt(ctx, type) {
+  const isHardware = type === 'hardware'
+  const desc = ctx.productStrategy || ctx.ideaText
+  const featureLine = ctx.coreFeatures.slice(0, 6).join(', ') || 'not specified'
 
-export function softwareImagePrompts(ctx) {
-  const featureLine = ctx.coreFeatures.slice(0, 4).join(', ')
-  return {
-    ui_mockups: `A single UI mockup screen for a software product called "${ctx.startupName}", showing its ` +
-      `primary in-app feature (${featureLine || 'its core workflow'}). Modern SaaS web app interface, ` +
-      `sidebar navigation, clean typography, a cohesive color palette. ${IMAGE_STYLE_SUFFIX}`,
-    landing_page: `A marketing landing page design for a software product called "${ctx.startupName}" targeting ` +
-      `${ctx.targetAudience || 'its target users'}. Hero section with a headline and call-to-action button, ` +
-      `feature highlights below. Modern web design, realistic browser framing. ${IMAGE_STYLE_SUFFIX}`,
-    dashboard: `An analytics dashboard UI for a software product called "${ctx.startupName}", with charts, ` +
-      `KPI cards, and a data table. Dark or light modern SaaS dashboard aesthetic. ${IMAGE_STYLE_SUFFIX}`,
-    mobile_screens: `Three mobile app screens shown side by side inside phone frames, for a mobile app called ` +
-      `"${ctx.startupName}" (${featureLine || 'its core feature'}). Modern mobile UI design. ${IMAGE_STYLE_SUFFIX}`,
-  }
+  return `${brandLine(ctx)}
+
+Product strategy: ${desc}
+Core features: ${featureLine}
+${isHardware ? '' : `Tech stack notes: ${ctx.existingTechStack.join(', ') || 'none provided'}`}
+
+Produce the CONTENT for an engineering concept sheet for this ${isHardware ? 'physical/hardware' : 'software'}
+product — a professional industrial-design blueprint / patent-concept-sheet style document. You are
+supplying facts and specifications only; a separate renderer draws the actual diagram, so do not
+describe layout, colors-as-pixels, or drawing style — just the real content that belongs on the sheet.
+
+${
+  isHardware
+    ? `Since this is a physical product: infer realistic, plausible physical dimensions (in cm or inches,
+whichever fits the product category), the real-world materials it would be made from, and its major
+physical components (the parts a labeled diagram would point to — e.g. housing, battery compartment,
+sensor array, strap, lid, buttons). If the founder's input doesn't specify these, intelligently infer
+them from the product category and core features so they are realistic and internally consistent —
+never leave them generic or contradictory.`
+    : `Since this is a software product: leave "dimensions" and "materials" out (dimensions null, materials
+empty) and instead let "components" describe the product's major modules/screens (e.g. dashboard, auth,
+core workflow view, settings) — the things a screen-layout diagram would label.`
 }
 
-export function physicalImagePrompts(ctx) {
-  const desc = ctx.productStrategy || ctx.ideaText
-  return {
-    product_concept: `A polished product concept render of a physical product for a startup called ` +
-      `"${ctx.startupName}": ${desc}. Studio lighting, neutral background, photorealistic industrial design ` +
-      `render. ${IMAGE_STYLE_SUFFIX}`,
-    product_views: [
-      `Front view of a physical product concept for "${ctx.startupName}": ${desc}. Studio product photography, ` +
-        `neutral background. ${IMAGE_STYLE_SUFFIX}`,
-      `Side view of the same physical product concept for "${ctx.startupName}": ${desc}. Studio product ` +
-        `photography, neutral background, consistent design with the front view. ${IMAGE_STYLE_SUFFIX}`,
-      `Back/rear view of the same physical product concept for "${ctx.startupName}": ${desc}. Studio product ` +
-        `photography, neutral background, consistent design. ${IMAGE_STYLE_SUFFIX}`,
-    ],
-    internal_components: `An exploded-view or cutaway technical illustration showing the internal components ` +
-      `and assembly of a physical product for "${ctx.startupName}": ${desc}. Technical/engineering diagram style, ` +
-      `labeled parts, clean background. ${IMAGE_STYLE_SUFFIX}`,
-    packaging_design: `Retail packaging design concept for a physical product called "${ctx.startupName}": ${desc}. ` +
-      `Box or container design with modern branding layout, shown at an angle on a neutral background. ` +
-      `${IMAGE_STYLE_SUFFIX}`,
-  }
+Also identify: which of the core features are AI-powered (if any) and a one-line callout explaining what
+each does; a small, cohesive color palette (name + hex) matching the brand/industry; key technical
+specifications (battery life, connectivity, materials/tech-stack, compliance, etc. — whichever are
+genuinely relevant to this product); and the 3-5 key functions a user/investor should understand at a
+glance. Set "hasExplodedView" to true only if a component/exploded breakdown is genuinely meaningful for
+this product (most hardware; rarely software).
+
+CONSTRAINTS
+- Every fact must be plausible and consistent with the product description and core features above —
+  never generic filler unrelated to this specific product.
+- Return ONLY valid JSON, no markdown, no preamble.
+
+EXPECTED JSON SCHEMA
+{
+  "productName": "${ctx.startupName}",
+  "tagline": "",
+  "type": "${type}",
+  "dimensions": ${isHardware ? '{ "length": "", "width": "", "height": "", "unit": "cm" }' : 'null'},
+  "materials": [${isHardware ? '""' : ''}],
+  "colorPalette": [{ "name": "", "hex": "#000000" }],
+  "components": [{ "label": "", "description": "" }],
+  "aiFeatures": [{ "feature": "", "callout": "" }],
+  "technicalSpecs": [{ "label": "", "value": "" }],
+  "keyFunctions": ["", "", ""],
+  "hasExplodedView": ${isHardware}
+}`
 }

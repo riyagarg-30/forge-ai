@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
-import GlassCard from '../components/GlassCard'
+import Card from '../components/Card'
 import FormAlert from '../components/FormAlert'
 import { useAuth } from '../context/AuthContext'
 
@@ -56,7 +56,7 @@ export default function Settings() {
       type="button"
       onClick={() => onChange(!checked)}
       className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200 ${
-        checked ? 'bg-forge-gradient' : 'bg-white/10'
+        checked ? 'bg-landing-accent' : 'bg-landing-border'
       }`}
     >
       <span
@@ -69,17 +69,17 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <h2 className="mb-6 text-2xl font-bold text-white sm:text-3xl">Settings</h2>
+      <h2 className="mb-6 text-2xl font-bold text-landing-text sm:text-3xl">Settings</h2>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <GlassCard>
-          <h3 className="mb-4 text-lg font-semibold text-white">Change Password</h3>
-          <FormAlert type="error" message={error} />
-          <FormAlert type="success" message={success} />
+        <Card>
+          <h3 className="mb-4 text-lg font-semibold text-landing-text">Change Password</h3>
+          <FormAlert type="error" message={error} theme="light" />
+          <FormAlert type="success" message={success} theme="light" />
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
-              <label className="label-text" htmlFor="newPassword">
+              <label className="label-text-light" htmlFor="newPassword">
                 New password
               </label>
               <input
@@ -87,12 +87,12 @@ export default function Settings() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="input-field"
+                className="input-field-light"
                 placeholder="••••••••"
               />
             </div>
             <div>
-              <label className="label-text" htmlFor="confirmPassword">
+              <label className="label-text-light" htmlFor="confirmPassword">
                 Confirm new password
               </label>
               <input
@@ -100,56 +100,56 @@ export default function Settings() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input-field"
+                className="input-field-light"
                 placeholder="••••••••"
               />
             </div>
-            <button type="submit" disabled={loading} className="btn-primary sm:w-auto sm:px-8">
+            <button type="submit" disabled={loading} className="btn-primary-light w-full sm:w-auto sm:px-8">
               {loading ? 'Updating…' : 'Update password'}
             </button>
           </form>
-        </GlassCard>
+        </Card>
 
-        <GlassCard delay={0.1}>
-          <h3 className="mb-4 text-lg font-semibold text-white">Notification Preferences</h3>
+        <Card delay={0.1}>
+          <h3 className="mb-4 text-lg font-semibold text-landing-text">Notification Preferences</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-200">Email notifications</p>
-                <p className="text-xs text-slate-500">Receive updates via email</p>
+                <p className="text-sm font-medium text-landing-text">Email notifications</p>
+                <p className="text-xs text-landing-muted">Receive updates via email</p>
               </div>
               <Toggle checked={emailNotifs} onChange={setEmailNotifs} />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-200">Product updates</p>
-                <p className="text-xs text-slate-500">New features and improvements</p>
+                <p className="text-sm font-medium text-landing-text">Product updates</p>
+                <p className="text-xs text-landing-muted">New features and improvements</p>
               </div>
               <Toggle checked={productUpdates} onChange={setProductUpdates} />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-200">Security alerts</p>
-                <p className="text-xs text-slate-500">Important account activity</p>
+                <p className="text-sm font-medium text-landing-text">Security alerts</p>
+                <p className="text-xs text-landing-muted">Important account activity</p>
               </div>
               <Toggle checked={securityAlerts} onChange={setSecurityAlerts} />
             </div>
           </div>
-        </GlassCard>
+        </Card>
 
-        <GlassCard delay={0.15} className="border-rose-500/20 lg:col-span-2">
-          <h3 className="mb-2 text-lg font-semibold text-white">Danger Zone</h3>
-          <p className="mb-4 text-sm text-slate-400">
+        <Card delay={0.15} className="border-rose-200 lg:col-span-2">
+          <h3 className="mb-2 text-lg font-semibold text-landing-text">Danger Zone</h3>
+          <p className="mb-4 text-sm text-landing-muted">
             Signing out will end your session on this device. You&apos;ll need to log in again to
             access your dashboard.
           </p>
           <button
             onClick={handleLogout}
-            className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-5 py-2.5 text-sm font-semibold text-rose-300 transition-colors hover:bg-rose-500/20"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-5 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
           >
             Log out of Forge
           </button>
-        </GlassCard>
+        </Card>
       </div>
     </DashboardLayout>
   )

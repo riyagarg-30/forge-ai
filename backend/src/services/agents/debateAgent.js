@@ -22,8 +22,8 @@ export async function runDebateAgent(context) {
     agentName: 'Debate Agent',
     prompt,
     schema: debateSchema,
-    temperature: 0.55,
-    maxTokens: 5000,
+    temperature: 0.45,
+    maxTokens: 1200,
   })
 
   const allowedSources = collectSources(

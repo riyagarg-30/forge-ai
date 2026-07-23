@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-export default function ScoreRing({ score, label, size = 120, color = '#8b5cf6' }) {
+export default function ScoreRing({ score, label, size = 120, color = '#6366F1' }) {
   const safeScore = Number.isFinite(score) ? Math.max(0, Math.min(100, score)) : null
   const radius = (size - 12) / 2
   const circumference = 2 * Math.PI * radius
@@ -15,7 +15,7 @@ export default function ScoreRing({ score, label, size = 120, color = '#8b5cf6' 
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="#E5E7EB"
             strokeWidth="6"
           />
           <motion.circle
@@ -34,17 +34,17 @@ export default function ScoreRing({ score, label, size = 120, color = '#8b5cf6' 
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.span
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-bold text-landing-text"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
           >
             {safeScore === null ? '—' : safeScore}
           </motion.span>
-          <span className="text-[10px] text-slate-500">/ 100</span>
+          <span className="text-[10px] text-landing-muted">/ 100</span>
         </div>
       </div>
-      {label && <span className="text-xs font-medium text-slate-400">{label}</span>}
+      {label && <span className="text-xs font-medium text-landing-muted">{label}</span>}
     </div>
   )
 }

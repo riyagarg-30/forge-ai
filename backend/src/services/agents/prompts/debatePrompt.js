@@ -29,32 +29,24 @@ ${formatPriorResult('PRODUCT AGENT REPORT', product)}
 ${formatPriorResult('LEGAL AGENT REPORT', legal)}
 
 INSTRUCTIONS
-1. Each of the 7 personas must speak at least once, referencing SPECIFIC content from the reports above (a number, an assumption, a named competitor, a stated risk) — not vague platitudes.
-2. Generate genuine disagreement: at least one participant must directly challenge another's reasoning with a counter-argument, not just add supporting color.
-3. The Venture Capitalist should stress-test the investment case (market size credibility, competitive moat, funding need vs. ask).
-4. The Startup CEO persona should defend the vision while acknowledging real weaknesses — not cheerlead uncritically.
-5. The CTO should assess technical feasibility and challenge the Product Agent's plan if the tech stack/timeline looks unrealistic for the team size/budget.
-6. The CFO should scrutinize the Finance Agent's unit economics and cost assumptions specifically — do they hold up?
-7. The Product Manager should defend or revise MVP scope under pressure from cost/timeline pushback.
-8. The Marketing Expert should assess go-to-market feasibility and customer acquisition assumptions.
-9. The Legal Counsel should raise concrete regulatory/compliance concerns from the Legal Agent report and their real impact on timeline/cost.
-10. Identify at least 2 genuine points of disagreement with the different positions taken and how (if at all) they were resolved.
-11. Identify strengths, weaknesses, remaining risks, and opportunities that emerged from the discussion — grounded in what was actually said, not generic startup risk boilerplate.
-12. End with a consensus statement reflecting where the committee actually landed — it does not have to be unanimous positivity; unresolved tension should be reflected honestly.
-13. Give a confidence score (0-100) reflecting how much real convergence the committee reached versus how much remains contested.
-14. Populate "sources" per the SOURCE CITATION RULE below — pull from whichever of the five reports' own "sources" arrays support the specific claims raised in the debate (e.g. a Market source cited when the VC challenges TAM, a Legal source cited when Legal Counsel raises a regulation).
+1. Each of the 7 personas speaks exactly once, in one short sentence (max ~15 words) referencing a SPECIFIC number, assumption, or claim from the reports above — not a generic platitude.
+2. At least one message must directly challenge another persona's point with a counter-argument — a debate with zero real disagreement is a failure.
+3. Identify only the top 3 strengths and top 3 risks that emerged, and exactly the genuine conflicts between agents' conclusions (e.g. Market's growth claims vs. Legal's regulatory risk, Finance's cost assumptions vs. Product's scope) — do not pad with more than what's genuinely there.
+4. End with a consensus statement that states the committee's converging recommendation explicitly as one of "Build", "Pivot", or "Reject", plus the one-line reason why.
+5. Give a confidence score (0-100) reflecting how much real convergence the committee reached.
+6. Populate "sources" per the SOURCE CITATION RULE below — cite only the 1-3 sources that most directly back the strongest conflict or risk raised.
 
 ${SOURCE_CITATION_RULE}
 
 CONSTRAINTS
+- Be extremely concise: total output across all fields must read in well under 250 words. One short sentence per message/list item — no elaboration, no repetition, no restating the reports.
 - Do NOT write a scripted, generic conversation. Every message must be traceable to something specific in the reports above.
-- Do NOT have every persona agree with each other — a debate with no real disagreement is a failure.
 - Each message's "type" must accurately reflect its content: "statement" (opening position), "agreement", "challenge" (direct pushback), "counter" (rebuttal to a challenge), "evidence" (citing specific data from a report), "consensus" (converging statement).
-- Produce at least 10 messages total across the 7 personas (some personas speak more than once as the discussion develops).
+- Produce exactly 8 messages total, one per persona plus one closing consensus message from the Startup CEO.
 - Return ONLY valid JSON, no markdown, no preamble.
 
 REASONING STRATEGY
-Before writing messages: (1) identify the 2-3 most contestable claims across the five reports (e.g. an optimistic TAM, an aggressive timeline, an unaddressed compliance cost), (2) assign these as the flashpoints of the debate, (3) script the discussion so personas naturally clash on those flashpoints with real content, (4) only after the discussion is coherent, derive the summary fields (agreements, disagreements, risks, strengths, weaknesses, opportunities, consensus) from what was actually said.
+Pick the single most contestable claim across the five reports, script the 8 messages so the personas clash on it directly, then derive the summary fields (top 3 strengths/risks, the genuine conflicts, consensus) from only what was actually said — do not invent additional points to fill space.
 
 EXPECTED JSON SCHEMA
 Return ONLY valid JSON matching this exact schema (no extra top-level keys, no omitted keys). "speaker" must be exactly one of: ${DEBATE_PERSONAS.join(', ')}.

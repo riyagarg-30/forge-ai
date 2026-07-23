@@ -30,8 +30,8 @@ export async function runCeoAgent(context) {
     agentName: 'CEO Agent',
     prompt,
     schema: ceoSchema,
-    temperature: 0.4,
-    maxTokens: 6000,
+    temperature: 0.35,
+    maxTokens: 2000,
   })
 
   const allowedSources = collectSources(

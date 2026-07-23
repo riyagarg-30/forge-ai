@@ -22,6 +22,7 @@ export async function runLegalAgent(context) {
     agentName: 'Legal Agent',
     prompt,
     schema: legalSchema,
+    maxTokens: 1500,
   })
 
   result.sources = tagSources(sources)

@@ -105,6 +105,42 @@ export const manufacturingPlanSchema = z.object({
 })
 
 /**
+ * Content for the deterministic engineering concept sheet that replaced
+ * Pollinations image generation. This is the only thing the LLM produces —
+ * factual/creative content (dimensions, materials, specs), never layout or
+ * pixels. The frontend renders it as HTML/CSS/SVG, so the same output is
+ * reproducible and responsive instead of a one-off AI image.
+ */
+export const conceptSheetSchema = z.object({
+  productName: z.string().min(1),
+  tagline: z.string().min(1),
+  type: z.enum(['hardware', 'software']),
+  dimensions: z
+    .object({
+      length: z.string().min(1),
+      width: z.string().min(1),
+      height: z.string().min(1),
+      unit: z.string().min(1),
+    })
+    .nullable(),
+  materials: flexibleStringArray(0).default([]),
+  colorPalette: z
+    .array(z.object({ name: z.string().min(1), hex: z.string().min(1) }))
+    .min(2),
+  components: z
+    .array(z.object({ label: z.string().min(1), description: z.string().min(1) }))
+    .min(3),
+  aiFeatures: z
+    .array(z.object({ feature: z.string().min(1), callout: z.string().min(1) }))
+    .min(1),
+  technicalSpecs: z
+    .array(z.object({ label: z.string().min(1), value: z.string().min(1) }))
+    .min(3),
+  keyFunctions: flexibleStringArray(3),
+  hasExplodedView: z.boolean().default(false),
+})
+
+/**
  * Shape returned by the code generation provider for a template project:
  * a flat map of filename -> full file contents, plus which one is the
  * entry point. Template prompts currently ask for a single "App.jsx".

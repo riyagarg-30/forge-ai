@@ -21,31 +21,31 @@ export default function Navbar({ onMenuClick }) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-white/10 bg-forge-bg/70 px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-landing-border bg-landing-card/90 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="rounded-lg p-2 text-slate-300 hover:bg-white/5 lg:hidden"
+          className="rounded-lg p-2 text-landing-muted hover:bg-landing-bg lg:hidden"
           aria-label="Toggle menu"
         >
           ☰
         </button>
-        <h1 className="text-base font-semibold text-white sm:text-lg">Welcome back 👋</h1>
+        <h1 className="text-base font-semibold text-landing-text sm:text-lg">Welcome back 👋</h1>
       </div>
 
       <div className="relative flex items-center gap-3">
-        <button className="hidden rounded-lg p-2 text-slate-300 hover:bg-white/5 sm:block" aria-label="Notifications">
+        <button className="hidden rounded-lg p-2 text-landing-muted hover:bg-landing-bg sm:block" aria-label="Notifications">
           🔔
         </button>
 
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 py-1.5 pl-1.5 pr-3 transition-colors hover:bg-white/10"
+          className="flex items-center gap-2 rounded-xl border border-landing-border bg-white py-1.5 pl-1.5 pr-3 transition-colors hover:bg-landing-bg"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-forge-gradient text-sm font-bold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-landing-accent text-sm font-bold text-white">
             {initials}
           </div>
-          <span className="hidden max-w-[140px] truncate text-sm text-slate-200 sm:block">
+          <span className="hidden max-w-[140px] truncate text-sm font-medium text-landing-text sm:block">
             {user?.user_metadata?.full_name || user?.email}
           </span>
         </button>
@@ -57,14 +57,14 @@ export default function Navbar({ onMenuClick }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
-              className="glass-panel absolute right-0 top-12 w-48 overflow-hidden p-1"
+              className="absolute right-0 top-12 w-48 overflow-hidden rounded-2xl border border-landing-border bg-landing-card p-1 shadow-lg"
             >
               <button
                 onClick={() => {
                   setMenuOpen(false)
                   navigate('/profile')
                 }}
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-landing-text hover:bg-landing-bg"
               >
                 Profile
               </button>
@@ -73,14 +73,14 @@ export default function Navbar({ onMenuClick }) {
                   setMenuOpen(false)
                   navigate('/settings')
                 }}
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-landing-text hover:bg-landing-bg"
               >
                 Settings
               </button>
-              <div className="my-1 h-px bg-white/10" />
+              <div className="my-1 h-px bg-landing-border" />
               <button
                 onClick={handleLogout}
-                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-400 hover:bg-rose-500/10"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
               >
                 Log out
               </button>

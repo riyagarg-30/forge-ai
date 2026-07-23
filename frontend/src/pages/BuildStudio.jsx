@@ -10,6 +10,7 @@ import {
 } from '@codesandbox/sandpack-react'
 import WorkspaceLayout from '../components/WorkspaceLayout'
 import GlassCard from '../components/GlassCard'
+import ConceptSheet from '../components/ConceptSheet'
 import { api } from '../lib/api'
 
 /** Maps a { files, entryFile, dependencies } project from the backend into Sandpack's file map. */
@@ -108,6 +109,32 @@ export default function BuildStudio() {
     }
   }, [sessionId])
 
+  // Concept sheet generation runs async on the backend; poll while it's in
+  // progress so the sheet appears without a manual refresh.
+  useEffect(() => {
+    if (studio?.buildStudioStatus !== 'generating') return
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await api.getBuildStudio(sessionId)
+        setStudio(data)
+      } catch {
+        // Transient poll failure — next tick will retry.
+      }
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [sessionId, studio?.buildStudioStatus])
+
+  async function handleGenerateConceptSheet() {
+    try {
+      await api.generateBuildStudio(sessionId)
+      setStudio((prev) => (prev ? { ...prev, buildStudioStatus: 'generating' } : prev))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   async function handleTemplateSubmit(values) {
     const template = activeTemplate
     setActiveTemplate(null)
@@ -179,6 +206,11 @@ export default function BuildStudio() {
           </p>
         </div>
 
+        <ConceptSheetSection
+          studio={studio}
+          onGenerate={handleGenerateConceptSheet}
+        />
+
         {genError && (
           <div className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-3 text-sm text-rose-300">
             {genError}
@@ -212,6 +244,59 @@ export default function BuildStudio() {
         )}
       </AnimatePresence>
     </WorkspaceLayout>
+  )
+}
+
+function ConceptSheetSection({ studio, onGenerate }) {
+  const asset = studio.assets?.find((a) => a.asset_key === 'concept_sheet')
+  const isGenerating = studio.buildStudioStatus === 'generating' || asset?.status === 'pending' || asset?.status === 'running'
+  const isFailed = !isGenerating && (asset?.status === 'failed' || studio.buildStudioStatus === 'failed')
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold text-white">Prototype Concept Sheet</h2>
+      <p className="mt-1 mb-4 text-sm text-slate-400">
+        A deterministic engineering concept sheet generated from the Product Agent's recommendations —
+        no AI image generation involved.
+      </p>
+
+      {asset?.status === 'completed' && asset.content ? (
+        <ConceptSheet sheet={asset.content} />
+      ) : (
+        <GlassCard>
+          {isGenerating ? (
+            <p className="text-sm text-slate-400">Generating your concept sheet…</p>
+          ) : isFailed ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-rose-400">
+                {asset?.error_message || 'Concept sheet generation failed.'}
+              </p>
+              <button
+                type="button"
+                onClick={onGenerate}
+                className="rounded-xl bg-forge-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition-transform hover:scale-[1.02]"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-slate-400">
+                Generate an engineering concept sheet — product dimensions, materials, components, and specs
+                laid out like an investor-ready blueprint.
+              </p>
+              <button
+                type="button"
+                onClick={onGenerate}
+                className="rounded-xl bg-forge-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition-transform hover:scale-[1.02]"
+              >
+                🧾 Generate Concept Sheet
+              </button>
+            </div>
+          )}
+        </GlassCard>
+      )}
+    </div>
   )
 }
 

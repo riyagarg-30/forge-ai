@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion'
+
 function normalizeUrl(url) {
   if (!url) return null
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
@@ -8,21 +10,27 @@ export function ReportList({ items }) {
   return (
     <ul className="mt-3 space-y-2">
       {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2.5">
-          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-forge-purple/60" />
-          <span className="text-sm text-slate-300">
+        <motion.li
+          key={i}
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i, 8) * 0.04 }}
+          className="flex items-start gap-2.5"
+        >
+          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-landing-accent/70" />
+          <span className="text-sm text-landing-text">
             {typeof item === 'string' ? item : item.name || item.risk || JSON.stringify(item)}
           </span>
-        </li>
+        </motion.li>
       ))}
     </ul>
   )
 }
 
 const SEVERITY_STYLES = {
-  High: 'border-rose-500/30 bg-rose-500/15 text-rose-400',
-  Medium: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
-  Low: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
+  High: 'border-rose-200 bg-rose-50 text-rose-600',
+  Medium: 'border-amber-200 bg-amber-50 text-amber-600',
+  Low: 'border-emerald-200 bg-emerald-50 text-emerald-600',
 }
 
 /** Cards for legal/financial risk items: { risk, severity, mitigation } */
@@ -31,9 +39,16 @@ export function RiskGrid({ items }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {items.map((r, i) => (
-        <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: Math.min(i, 8) * 0.05 }}
+          whileHover={{ y: -2 }}
+          className="rounded-xl border border-landing-border bg-landing-card p-3.5 shadow-sm transition-shadow hover:shadow-md"
+        >
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-medium text-slate-200">{r.risk}</p>
+            <p className="text-sm font-medium text-landing-text">{r.risk}</p>
             <span
               className={`flex-shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
                 SEVERITY_STYLES[r.severity] || SEVERITY_STYLES.Medium
@@ -43,11 +58,11 @@ export function RiskGrid({ items }) {
             </span>
           </div>
           {r.mitigation && (
-            <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              <span className="text-slate-400">Mitigation: </span>{r.mitigation}
+            <p className="mt-2 text-xs leading-relaxed text-landing-muted">
+              <span className="font-medium text-landing-text">Mitigation: </span>{r.mitigation}
             </p>
           )}
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -59,54 +74,58 @@ export function CompetitorGrid({ items }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {items.map((c, i) => (
-        <div
+        <motion.div
           key={i}
-          className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 transition-colors hover:border-white/15 hover:bg-white/[0.05]"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: Math.min(i, 8) * 0.05 }}
+          whileHover={{ y: -2 }}
+          className="rounded-2xl border border-landing-border bg-landing-card p-4 shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="flex items-start justify-between gap-2">
-            <h5 className="text-sm font-semibold text-white">{c.name}</h5>
+            <h5 className="text-sm font-semibold text-landing-text">{c.name}</h5>
             {c.website && (
               <a
                 href={normalizeUrl(c.website)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1 text-[10px] font-medium text-forge-purple transition-colors hover:bg-forge-purple/20 hover:text-white"
+                className="flex-shrink-0 rounded-full bg-landing-bg px-2.5 py-1 text-[10px] font-medium text-landing-accent transition-colors hover:bg-landing-accent/10"
               >
                 Visit ↗
               </a>
             )}
           </div>
-          {c.description && <p className="mt-2 text-xs leading-relaxed text-slate-400">{c.description}</p>}
+          {c.description && <p className="mt-2 text-xs leading-relaxed text-landing-muted">{c.description}</p>}
           {c.whyRelevant && (
-            <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              <span className="text-slate-400">Why it matters: </span>{c.whyRelevant}
+            <p className="mt-2 text-xs leading-relaxed text-landing-muted">
+              <span className="font-medium text-landing-text">Why it matters: </span>{c.whyRelevant}
             </p>
           )}
           {(c.strengths?.length > 0 || c.weaknesses?.length > 0) && (
-            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-3">
+            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-landing-border pt-3">
               {c.strengths?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Strengths</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Strengths</p>
                   <ul className="mt-1.5 space-y-1">
                     {c.strengths.map((s, si) => (
-                      <li key={si} className="text-[11px] leading-relaxed text-slate-400">+ {s}</li>
+                      <li key={si} className="text-[11px] leading-relaxed text-landing-muted">+ {s}</li>
                     ))}
                   </ul>
                 </div>
               )}
               {c.weaknesses?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-400">Weaknesses</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-rose-600">Weaknesses</p>
                   <ul className="mt-1.5 space-y-1">
                     {c.weaknesses.map((w, wi) => (
-                      <li key={wi} className="text-[11px] leading-relaxed text-slate-400">− {w}</li>
+                      <li key={wi} className="text-[11px] leading-relaxed text-landing-muted">− {w}</li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
           )}
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -116,21 +135,21 @@ export function CompetitorGrid({ items }) {
 export function CostBreakdownTable({ items }) {
   if (!items?.length) return null
   return (
-    <div className="overflow-hidden rounded-xl border border-white/[0.06]">
+    <div className="overflow-hidden rounded-xl border border-landing-border">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/[0.03]">
+        <thead className="bg-landing-bg">
           <tr>
-            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Category</th>
-            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Amount</th>
-            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Notes</th>
+            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-landing-muted">Category</th>
+            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-landing-muted">Amount</th>
+            <th className="px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-landing-muted">Notes</th>
           </tr>
         </thead>
         <tbody>
           {items.map((c, i) => (
-            <tr key={i} className="border-t border-white/[0.06]">
-              <td className="px-3 py-2 text-slate-200">{c.category}</td>
-              <td className="px-3 py-2 font-medium text-white">{c.amount}</td>
-              <td className="px-3 py-2 text-xs text-slate-500">{c.notes}</td>
+            <tr key={i} className="border-t border-landing-border bg-landing-card transition-colors hover:bg-landing-bg">
+              <td className="px-3 py-2 text-landing-text">{c.category}</td>
+              <td className="px-3 py-2 font-medium text-landing-text">{c.amount}</td>
+              <td className="px-3 py-2 text-xs text-landing-muted">{c.notes}</td>
             </tr>
           ))}
         </tbody>
@@ -155,16 +174,16 @@ export function SourceList({ sources }) {
             href={normalizeUrl(url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 transition-colors hover:border-forge-purple/30 hover:bg-white/[0.04]"
+            className="group flex items-center justify-between gap-3 rounded-xl border border-landing-border bg-landing-card px-3 py-2 transition-colors hover:border-landing-accent/30 hover:bg-landing-bg"
           >
             <span className="flex min-w-0 items-center gap-2">
-              <span className="flex-shrink-0 text-xs text-slate-500">🔗</span>
-              <span className="truncate text-sm text-slate-300 underline decoration-white/20 underline-offset-2 group-hover:text-white group-hover:decoration-forge-purple">
+              <span className="flex-shrink-0 text-xs text-landing-muted">🔗</span>
+              <span className="truncate text-sm text-landing-text underline decoration-landing-border underline-offset-2 group-hover:decoration-landing-accent">
                 {label}
               </span>
             </span>
             {type && (
-              <span className="flex-shrink-0 rounded-full bg-forge-purple/10 px-2 py-0.5 text-[10px] font-medium text-forge-purple">
+              <span className="flex-shrink-0 rounded-full bg-landing-accent/10 px-2 py-0.5 text-[10px] font-medium text-landing-accent">
                 {type}
               </span>
             )}

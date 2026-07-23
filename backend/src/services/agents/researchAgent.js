@@ -22,6 +22,7 @@ export async function runResearchAgent(context) {
     agentName: 'Research Agent',
     prompt,
     schema: researchSchema,
+    maxTokens: 1500,
   })
 
   // Sources are always the real, typed search results — never the model's

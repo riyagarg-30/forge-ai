@@ -85,14 +85,14 @@ export default function AnalysisPipeline() {
           <div className="mb-2 flex items-center gap-3">
             <PhaseIndicator stage={stage} />
           </div>
-          <h1 className="text-xl font-bold text-white sm:text-2xl">
+          <h1 className="text-xl font-bold text-landing-text sm:text-2xl">
             {stage === 'parallel' && 'AI co-founders analyzing in parallel'}
             {stage === 'debate' && 'Investment Committee Debate'}
             {stage === 'ceo' && 'CEO Agent final review'}
           </h1>
           {session && (
-            <p className="mt-2 text-sm text-slate-400 line-clamp-2">
-              {session.startup_name && <span className="text-forge-purple">{session.startup_name}</span>}
+            <p className="mt-2 text-sm text-landing-muted line-clamp-2">
+              {session.startup_name && <span className="text-landing-accent">{session.startup_name}</span>}
               {session.startup_name && ' — '}
               &ldquo;{session.idea_text}&rdquo;
             </p>
@@ -100,19 +100,19 @@ export default function AnalysisPipeline() {
         </motion.div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
           </div>
         )}
 
         {sessionFailed && (
-          <div className="mb-6 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             The analysis pipeline failed to complete.{' '}
-            <Link to={`/analysis/${sessionId}/report`} className="underline hover:text-rose-300">
+            <Link to={`/analysis/${sessionId}/report`} className="underline hover:text-rose-800">
               View partial results
             </Link>
             {' · '}
-            <Link to="/dashboard" className="underline hover:text-rose-300">
+            <Link to="/dashboard" className="underline hover:text-rose-800">
               Back to workspace
             </Link>
           </div>
@@ -123,12 +123,12 @@ export default function AnalysisPipeline() {
             <motion.div key="parallel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="mb-6">
                 <div className="mb-2 flex justify-between text-xs">
-                  <span className="text-slate-500">{parallelComplete} of {PARALLEL_AGENTS.length} agents done</span>
-                  <span className="font-mono text-slate-400">{parallelProgress}%</span>
+                  <span className="text-landing-muted">{parallelComplete} of {PARALLEL_AGENTS.length} agents done</span>
+                  <span className="font-mono text-landing-muted">{parallelProgress}%</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="h-1.5 overflow-hidden rounded-full bg-landing-border">
                   <motion.div
-                    className="h-full rounded-full bg-forge-gradient"
+                    className="h-full rounded-full bg-landing-accent"
                     animate={{ width: `${parallelProgress}%` }}
                     transition={{ duration: 0.5 }}
                   />
@@ -140,7 +140,7 @@ export default function AnalysisPipeline() {
                 activeKeys={PARALLEL_AGENTS.filter((a) => agentResults[a.key]?.status === 'running').map((a) => a.key)}
               />
               {parallelDone && !debateResult && (
-                <p className="mt-4 text-center text-xs text-slate-500">Preparing the investment committee debate…</p>
+                <p className="mt-4 text-center text-xs text-landing-muted">Preparing the investment committee debate…</p>
               )}
             </motion.div>
           )}
@@ -148,7 +148,7 @@ export default function AnalysisPipeline() {
           {stage === 'debate' && DEBATE_AGENT && (
             <motion.div key="debate" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               {debateResult?.status === 'completed' ? (
-                <LiveDebate debateResult={debateResult.result} isLive={false} />
+                <LiveDebate debateResult={debateResult.result} isLive={false} theme="light" />
               ) : (
                 <div className="max-w-md mx-auto">
                   <AgentPipelineCard
@@ -180,8 +180,8 @@ export default function AnalysisPipeline() {
               />
               {ceoResult?.status === 'completed' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 text-center">
-                  <p className="text-lg font-semibold text-white">Analysis complete</p>
-                  <p className="mt-2 text-sm text-slate-400">Opening your intelligence report…</p>
+                  <p className="text-lg font-semibold text-landing-text">Analysis complete</p>
+                  <p className="mt-2 text-sm text-landing-muted">Opening your intelligence report…</p>
                 </motion.div>
               )}
             </motion.div>
@@ -206,14 +206,14 @@ function PhaseIndicator({ stage }) {
         const isPast = phases.findIndex((x) => x.key === stage) > i
         return (
           <div key={p.key} className="flex items-center gap-2">
-            {i > 0 && <span className="text-slate-700">→</span>}
+            {i > 0 && <span className="text-landing-border">→</span>}
             <span
               className={`rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wider ${
                 isActive
-                  ? 'bg-forge-purple/20 text-forge-purple'
+                  ? 'bg-landing-accent/10 text-landing-accent'
                   : isPast
-                    ? 'bg-emerald-500/10 text-emerald-400'
-                    : 'bg-white/[0.04] text-slate-600'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'border border-landing-border bg-landing-card text-landing-muted'
               }`}
             >
               {p.label}

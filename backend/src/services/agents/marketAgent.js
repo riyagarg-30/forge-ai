@@ -22,6 +22,7 @@ export async function runMarketAgent(context) {
     agentName: 'Market Agent',
     prompt,
     schema: marketSchema,
+    maxTokens: 2000,
   })
 
   // Real, typed sources for the frontend, built from actual search results —

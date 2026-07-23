@@ -1,6 +1,5 @@
 import { supabaseAdmin } from '../../config/supabaseAdmin.js'
 import { generateStructured } from '../agents/lib/llmJson.js'
-import { generateAndStoreImage } from './imageClient.js'
 import {
   buildAssetContext,
   techStackPrompt,
@@ -8,8 +7,7 @@ import {
   databaseSchemaPrompt,
   developmentRoadmapPrompt,
   manufacturingPlanPrompt,
-  softwareImagePrompts,
-  physicalImagePrompts,
+  conceptSheetPrompt,
 } from './prompts.js'
 import {
   techStackSchema,
@@ -17,6 +15,7 @@ import {
   databaseSchemaSchema,
   developmentRoadmapSchema,
   manufacturingPlanSchema,
+  conceptSheetSchema,
 } from './schemas.js'
 
 const MAX_ATTEMPTS = 2
@@ -35,16 +34,16 @@ const ASSET_TITLES = {
   internal_components: 'Internal Components',
   packaging_design: 'Packaging Design',
   manufacturing_plan: 'Manufacturing Plan',
+  concept_sheet: 'Engineering Concept Sheet',
 }
 
-/** Builds the flat list of asset jobs to run for a software startup. */
-function buildSoftwareJobs(ctx, sessionId) {
-  const images = softwareImagePrompts(ctx)
+/** Builds the flat list of asset jobs to run for a software startup. No image generation — the concept sheet is a deterministically-rendered document. */
+function buildSoftwareJobs(ctx) {
   return [
-    { assetKey: 'ui_mockups', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'ui_mockups', prompt: images.ui_mockups }) },
-    { assetKey: 'landing_page', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'landing_page', prompt: images.landing_page }) },
-    { assetKey: 'dashboard', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'dashboard', prompt: images.dashboard }) },
-    { assetKey: 'mobile_screens', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'mobile_screens', prompt: images.mobile_screens, size: '1024x1536' }) },
+    {
+      assetKey: 'concept_sheet', kind: 'document', sequence: 0,
+      run: () => generateStructured({ agentName: 'Build Studio: Concept Sheet', prompt: conceptSheetPrompt(ctx, 'software'), schema: conceptSheetSchema, temperature: 0.5, maxTokens: 1800 }),
+    },
     {
       assetKey: 'tech_stack', kind: 'document', sequence: 0,
       run: () => generateStructured({ agentName: 'Build Studio: Tech Stack', prompt: techStackPrompt(ctx), schema: techStackSchema, temperature: 0.4, maxTokens: 1200 }),
@@ -64,17 +63,13 @@ function buildSoftwareJobs(ctx, sessionId) {
   ]
 }
 
-/** Builds the flat list of asset jobs to run for a physical-product startup. */
-function buildPhysicalJobs(ctx, sessionId) {
-  const images = physicalImagePrompts(ctx)
+/** Builds the flat list of asset jobs to run for a physical-product startup. No image generation — the concept sheet is a deterministically-rendered document. */
+function buildPhysicalJobs(ctx) {
   return [
-    { assetKey: 'product_concept', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'product_concept', prompt: images.product_concept }) },
-    ...images.product_views.map((prompt, i) => ({
-      assetKey: 'product_views', kind: 'image', sequence: i,
-      run: () => generateAndStoreImage({ sessionId, assetKey: 'product_views', sequence: i, prompt }),
-    })),
-    { assetKey: 'internal_components', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'internal_components', prompt: images.internal_components }) },
-    { assetKey: 'packaging_design', kind: 'image', sequence: 0, run: () => generateAndStoreImage({ sessionId, assetKey: 'packaging_design', prompt: images.packaging_design }) },
+    {
+      assetKey: 'concept_sheet', kind: 'document', sequence: 0,
+      run: () => generateStructured({ agentName: 'Build Studio: Concept Sheet', prompt: conceptSheetPrompt(ctx, 'hardware'), schema: conceptSheetSchema, temperature: 0.5, maxTokens: 1800 }),
+    },
     {
       assetKey: 'manufacturing_plan', kind: 'document', sequence: 0,
       run: () => generateStructured({ agentName: 'Build Studio: Manufacturing Plan', prompt: manufacturingPlanPrompt(ctx), schema: manufacturingPlanSchema, temperature: 0.4, maxTokens: 1600 }),
@@ -175,25 +170,12 @@ export async function runBuildStudio(sessionId) {
   await supabaseAdmin.from('analysis_sessions').update({ build_studio_status: 'generating' }).eq('id', sessionId)
 
   const ctx = buildAssetContext({ session, priorResults, ceoResult })
-  const jobs = session.startup_type === 'physical' ? buildPhysicalJobs(ctx, sessionId) : buildSoftwareJobs(ctx, sessionId)
+  const jobs = session.startup_type === 'physical' ? buildPhysicalJobs(ctx) : buildSoftwareJobs(ctx)
 
-  // Image jobs hit the free Pollinations API, which is rate-limited for
-  // anonymous use — run those one at a time. Document jobs just call the
-  // existing Groq LLM, so those can still run concurrently.
-  const imageJobs = jobs.filter((job) => job.kind === 'image')
-  const documentJobs = jobs.filter((job) => job.kind === 'document')
-
-  const documentOutcomes = await Promise.allSettled(documentJobs.map((job) => runJob(sessionId, job)))
-
-  const imageOutcomes = []
-  for (const job of imageJobs) {
-    imageOutcomes.push(await runJob(sessionId, job).then(
-      (value) => ({ status: 'fulfilled', value }),
-      (reason) => ({ status: 'rejected', reason })
-    ))
-  }
-
-  const outcomes = [...documentOutcomes, ...imageOutcomes]
+  // All jobs are documents (LLM content, deterministically rendered by the
+  // frontend) now that Pollinations image generation has been removed, so
+  // they can all run concurrently with no rate-limit concern.
+  const outcomes = await Promise.allSettled(jobs.map((job) => runJob(sessionId, job)))
   const allFailed = outcomes.every((o) => o.status === 'rejected' || o.value?.status === 'failed')
 
   // Partial success still leaves a usable Build Studio (whatever generated
