@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -i -X OPTIONS http://localhost:5001/api/analysis/sessions/test-session/build-studio/generate-template -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization')",
+      "Bash(curl -s -i -X POST http://localhost:5001/api/analysis/sessions/test-session/build-studio/generate-template -H 'Origin: http://localhost:5173' -H 'Content-Type: application/json' -H 'Authorization: Bearer faketoken' -d '{\"templateKey\":\"landing_page\",\"formValues\":{}}')",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Stop-Process -Id 4628 -Force\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -i -X OPTIONS http://localhost:5173/api/analysis/sessions/test-session/build-studio/generate-template -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization')",
+      "Bash(curl -s -i -X POST http://localhost:5173/api/analysis/sessions/test-session/build-studio/generate-template -H 'Content-Type: application/json' -H 'Authorization: Bearer faketoken' -d '{\"templateKey\":\"landing_page\",\"formValues\":{}}')"
+    ]
+  }
+}

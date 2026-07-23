@@ -7,6 +7,7 @@ import AuthCallback from './pages/AuthCallback'
 import Workspace from './pages/Workspace'
 import AnalysisPipeline from './pages/AnalysisPipeline'
 import AnalysisReport from './pages/AnalysisReport'
+import BuildStudio from './pages/BuildStudio'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -43,6 +44,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <AnalysisReport />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analysis/:sessionId/build-studio"
+        element={
+          <ProtectedRoute>
+            <BuildStudio />
           </ProtectedRoute>
         }
       />

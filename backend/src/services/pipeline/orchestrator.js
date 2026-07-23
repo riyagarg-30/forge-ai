@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../../config/supabaseAdmin.js'
 import { AGENT_META } from '../../constants/agents.js'
 import { executeAgent } from '../agents/index.js'
 import { getExecutionStages } from './dependencyGraph.js'
+import { classifyStartupType } from '../buildStudio/classifyStartupType.js'
 
 const MAX_ATTEMPTS = 2 // 1 initial attempt + 1 retry on failure
 
@@ -139,5 +140,42 @@ export async function runPipeline(sessionId) {
   const finalStatus = resultsMap.ceo?.status === 'completed' ? 'completed' : 'failed'
   await supabaseAdmin.from('analysis_sessions').update({ status: finalStatus }).eq('id', sessionId)
 
+  await maybeUnlockBuildStudio(session, resultsMap)
+
   return resultsMap
+}
+
+/**
+ * Once the CEO Agent issues its verdict, decide — automatically, with no
+ * user input — whether Build Studio should unlock, and if so, whether this
+ * is a software or physical-product startup. Runs only on a "Build"
+ * verdict; any other verdict leaves Build Studio locked.
+ */
+async function maybeUnlockBuildStudio(session, resultsMap) {
+  const ceoResult = resultsMap.ceo?.status === 'completed' ? resultsMap.ceo.result : null
+  if (!ceoResult || ceoResult.verdict !== 'Build') return
+
+  try {
+    const priorResults = buildPriorResults(resultsMap)
+    const { startupType, reasoning } = await classifyStartupType({
+      startupName: session.startup_name || session.business_details?.startupName || 'Your Startup',
+      ideaText: session.idea_text,
+      businessDetails: session.business_details || {},
+      priorResults,
+      ceoResult,
+    })
+
+    await supabaseAdmin
+      .from('analysis_sessions')
+      .update({
+        startup_type: startupType,
+        startup_type_reasoning: reasoning,
+        build_studio_status: 'available',
+      })
+      .eq('id', session.id)
+  } catch (err) {
+    console.error(`[buildStudio] classification failed for session ${session.id}:`, err.message)
+    // Leave build_studio_status as 'locked' — the user can still see the
+    // report; Build Studio simply won't appear until this is resolved.
+  }
 }

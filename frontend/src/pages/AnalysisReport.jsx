@@ -100,12 +100,25 @@ export default function AnalysisReport() {
               </h1>
               <p className="mt-2 max-w-2xl text-sm italic text-slate-400">&ldquo;{session?.idea_text}&rdquo;</p>
             </div>
-            {ceo && (
-              <div className={`rounded-xl border px-4 py-2 text-center ${decisionStyle.bg} ${decisionStyle.border}`}>
-                <p className="text-[10px] uppercase tracking-wider text-slate-400">CEO Verdict</p>
-                <p className={`text-xl font-bold ${decisionStyle.text}`}>{ceo.verdict}</p>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {ceo && (
+                <div className={`rounded-xl border px-4 py-2 text-center ${decisionStyle.bg} ${decisionStyle.border}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400">CEO Verdict</p>
+                  <p className={`text-xl font-bold ${decisionStyle.text}`}>{ceo.verdict}</p>
+                </div>
+              )}
+              {session?.build_studio_status && session.build_studio_status !== 'locked' && (
+                <Link
+                  to={`/analysis/${sessionId}/build-studio`}
+                  className="flex items-center gap-2 rounded-xl bg-forge-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition-transform hover:scale-[1.02]"
+                >
+                  🏗️ Build Studio
+                  {session.build_studio_status === 'generating' && (
+                    <span className="text-[10px] font-normal text-white/80">generating…</span>
+                  )}
+                </Link>
+              )}
+            </div>
           </div>
         </motion.div>
 
